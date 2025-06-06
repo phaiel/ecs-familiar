@@ -1,5 +1,5 @@
 use async_graphql::{
-    EmptySubscription, Object, Schema, Context,
+    EmptySubscription, Object, Schema, Context, SimpleObject,
 };
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
@@ -12,6 +12,39 @@ use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use crossbeam_channel::Sender;
 use crate::common::GqlCommand;
+use hecs::World;
+use std::sync::{Arc, Mutex};
+
+#[derive(SimpleObject)]
+pub struct EntityInfo {
+    pub id: String,
+    pub entity_type: String,
+    pub display_text: String,
+    pub created_at: String,
+    pub strength: Option<f32>,
+}
+
+#[derive(SimpleObject)]
+pub struct MemoryStats {
+    pub total_entities: usize,
+    pub entities_by_type: Vec<TypeCount>,
+    pub active_laws: usize,
+    pub memory_usage_mb: f64,
+}
+
+#[derive(SimpleObject)]
+pub struct TypeCount {
+    pub entity_type: String,
+    pub count: usize,
+}
+
+#[derive(SimpleObject)]
+pub struct ThreadWithMoments {
+    pub thread_id: String,
+    pub thread_name: String,
+    pub thread_type: String,
+    pub moments: Vec<EntityInfo>,
+}
 
 /// Root query object for the Familiar Memory API.
 /// Provides read-only access to the memory simulation data.
@@ -29,6 +62,168 @@ impl QueryRoot {
     /// ```
     async fn health(&self) -> &'static str {
         "ok"
+    }
+
+    /// Get comprehensive memory system statistics
+    async fn memory_stats(&self, ctx: &Context<'_>) -> MemoryStats {
+        let world = ctx.data::<Arc<Mutex<World>>>().unwrap();
+        let world = world.lock().unwrap();
+        
+        let mut type_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+        let mut total = 0;
+        let mut law_count = 0;
+
+        for (_entity, entity_type) in world.query::<&crate::components::EntityType>().iter() {
+            total += 1;
+            *type_counts.entry(entity_type.0.clone()).or_insert(0) += 1;
+            if entity_type.0 == "law" {
+                law_count += 1;
+            }
+        }
+
+        let entities_by_type = type_counts.into_iter()
+            .map(|(entity_type, count)| TypeCount { entity_type, count })
+            .collect();
+
+        MemoryStats {
+            total_entities: total,
+            entities_by_type,
+            active_laws: law_count,
+            memory_usage_mb: 0.0, // TODO: Calculate actual memory usage
+        }
+    }
+
+    /// Query entities by type with optional limit
+    async fn entities_by_type(&self, ctx: &Context<'_>, entity_type: String, limit: Option<i32>) -> Vec<EntityInfo> {
+        let world = ctx.data::<Arc<Mutex<World>>>().unwrap();
+        let world = world.lock().unwrap();
+        
+        let mut entities = Vec::new();
+        let limit = limit.unwrap_or(50) as usize;
+
+        for (entity, (etype, display_text)) in world.query::<(&crate::components::EntityType, &crate::components::DisplayText)>().iter() {
+            if etype.0 == entity_type && entities.len() < limit {
+                let strength = world.get::<&crate::components::DecayComponent>(entity)
+                    .map(|decay| decay.strength)
+                    .ok();
+
+                entities.push(EntityInfo {
+                    id: format!("{:?}", entity),
+                    entity_type: etype.0.clone(),
+                    display_text: display_text.0.clone(),
+                    created_at: "2024-01-01T00:00:00Z".to_string(), // TODO: Get real timestamp
+                    strength,
+                });
+            }
+        }
+
+        entities
+    }
+
+    /// Get all threads with their associated moments
+    async fn threads_with_moments(&self, ctx: &Context<'_>) -> Vec<ThreadWithMoments> {
+        let world = ctx.data::<Arc<Mutex<World>>>().unwrap();
+        let world = world.lock().unwrap();
+        
+        let mut threads = Vec::new();
+
+        // Find all threads
+        for (_entity, (etype, display_text, thread_type, thread_id)) in world.query::<(
+            &crate::components::EntityType, 
+            &crate::components::DisplayText,
+            &crate::components::ThreadType,
+            &crate::components::ThreadId
+        )>().iter() {
+            if etype.0 == "thread" {
+                let mut moments = Vec::new();
+                
+                // Find moments for this thread
+                for (moment_entity, (moment_type, moment_text, moment_thread_id)) in world.query::<(
+                    &crate::components::EntityType,
+                    &crate::components::DisplayText, 
+                    &crate::components::ThreadId
+                )>().iter() {
+                    if moment_type.0 == "moment" && moment_thread_id.0 == thread_id.0 {
+                        let strength = world.get::<&crate::components::DecayComponent>(moment_entity)
+                            .map(|decay| decay.strength)
+                            .ok();
+
+                        moments.push(EntityInfo {
+                            id: format!("{:?}", moment_entity),
+                            entity_type: "moment".to_string(),
+                            display_text: moment_text.0.clone(),
+                            created_at: "2024-01-01T00:00:00Z".to_string(),
+                            strength,
+                        });
+                    }
+                }
+
+                threads.push(ThreadWithMoments {
+                    thread_id: thread_id.0.clone(),
+                    thread_name: display_text.0.clone(),
+                    thread_type: thread_type.0.clone(),
+                    moments,
+                });
+            }
+        }
+
+        threads
+    }
+
+    /// Search entities by text content
+    async fn search_entities(&self, ctx: &Context<'_>, query: String, limit: Option<i32>) -> Vec<EntityInfo> {
+        let world = ctx.data::<Arc<Mutex<World>>>().unwrap();
+        let world = world.lock().unwrap();
+        
+        let mut entities = Vec::new();
+        let limit = limit.unwrap_or(20) as usize;
+        let query_lower = query.to_lowercase();
+
+        for (entity, (etype, display_text)) in world.query::<(&crate::components::EntityType, &crate::components::DisplayText)>().iter() {
+            if display_text.0.to_lowercase().contains(&query_lower) && entities.len() < limit {
+                let strength = world.get::<&crate::components::DecayComponent>(entity)
+                    .map(|decay| decay.strength)
+                    .ok();
+
+                entities.push(EntityInfo {
+                    id: format!("{:?}", entity),
+                    entity_type: etype.0.clone(),
+                    display_text: display_text.0.clone(),
+                    created_at: "2024-01-01T00:00:00Z".to_string(),
+                    strength,
+                });
+            }
+        }
+
+        entities
+    }
+
+    /// Get entities with strength above threshold (time-based filter)
+    async fn strong_entities(&self, ctx: &Context<'_>, min_strength: f64, limit: Option<i32>) -> Vec<EntityInfo> {
+        let world = ctx.data::<Arc<Mutex<World>>>().unwrap();
+        let world = world.lock().unwrap();
+        
+        let mut entities = Vec::new();
+        let limit = limit.unwrap_or(20) as usize;
+
+        for (entity, (etype, display_text, decay)) in world.query::<(
+            &crate::components::EntityType, 
+            &crate::components::DisplayText,
+            &crate::components::DecayComponent
+        )>().iter() {
+            if decay.strength >= min_strength as f32 && entities.len() < limit {
+                entities.push(EntityInfo {
+                    id: format!("{:?}", entity),
+                    entity_type: etype.0.clone(),
+                    display_text: display_text.0.clone(),
+                    created_at: "2024-01-01T00:00:00Z".to_string(),
+                    strength: Some(decay.strength),
+                });
+            }
+        }
+
+        entities.sort_by(|a, b| b.strength.partial_cmp(&a.strength).unwrap_or(std::cmp::Ordering::Equal));
+        entities
     }
 }
 
@@ -162,7 +357,29 @@ impl MutationRoot {
         sender.send(GqlCommand::CreateBinding { moment_id, thread_id }).is_ok()
     }
 
+    /// Update component strength for any entity (mutable component operation)
+    async fn update_strength(&self, ctx: &Context<'_>, entity_id: String, new_strength: f32) -> bool {
+        let sender = ctx.data::<Sender<GqlCommand>>().unwrap();
+        sender.send(GqlCommand::UpdateStrength { entity_id, new_strength }).is_ok()
+    }
 
+    /// Update display text for any entity (mutable component operation)
+    async fn update_display_text(&self, ctx: &Context<'_>, entity_id: String, new_text: String) -> bool {
+        let sender = ctx.data::<Sender<GqlCommand>>().unwrap();
+        sender.send(GqlCommand::UpdateDisplayText { entity_id, new_text }).is_ok()
+    }
+
+    /// Add a tag to an entity (append-only operation on immutable entity field)
+    async fn add_entity_tag(&self, ctx: &Context<'_>, entity_id: String, tag: String) -> bool {
+        let sender = ctx.data::<Sender<GqlCommand>>().unwrap();
+        sender.send(GqlCommand::AddEntityTag { entity_id, tag }).is_ok()
+    }
+
+    /// Soft delete an entity (append-only operation - sets deleted_at timestamp)
+    async fn soft_delete_entity(&self, ctx: &Context<'_>, entity_id: String) -> bool {
+        let sender = ctx.data::<Sender<GqlCommand>>().unwrap();
+        sender.send(GqlCommand::SoftDeleteEntity { entity_id }).is_ok()
+    }
 }
 
 pub type AppSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
@@ -261,9 +478,10 @@ async fn graphiql() -> impl IntoResponse {
 }
 
 /// Runs the GraphQL server.
-pub async fn run_graphql_server(sender: Sender<GqlCommand>) {
+pub async fn run_graphql_server(sender: Sender<GqlCommand>, world: Arc<Mutex<World>>) {
     let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(sender)
+        .data(world)
         .finish();
 
     let app = Router::new()

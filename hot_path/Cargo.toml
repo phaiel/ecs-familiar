@@ -18,4 +18,5 @@ async-graphql = "7.0"
 async-graphql-axum = "7.0"
 axum = "0.8"
 crossbeam-channel = "0.5"
-colored = "2.0"  # For nice terminal output 
+colored = "2.0"  # For nice terminal output
+thiserror = "1.0"  # For error handling 

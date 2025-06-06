@@ -1,13 +1,12 @@
-// This module contains the core ECS systems logic.
-// Systems operate on entities and their components to drive the simulation.
-// The law system has replaced hardcoded behaviors like decay.
+// This module contains the core ECS systems coordinator.
+// The actual systems are now in the systems module following proper ECS architecture.
+// Laws are systems (behavior) not entities (data).
 
 use hecs::World;
 
-/// Generic system runner - delegates to law_executor for all dynamic behaviors
-/// Laws defined in the cold path schema now handle decay, resonance, etc.
-pub fn run_systems(world: &mut World) {
-    // All dynamic behaviors are now handled by the law system
-    // This keeps the ECS clean and makes all game rules schema-driven
-    crate::law_executor::execute_laws(world, crate::components::LawTrigger::OnTick);
+/// Generic system runner - coordinates all ECS systems
+/// Systems are the "laws of physics" that operate on entities
+pub fn run_systems(world: &mut World, law_specs: &crate::systems::LawSpecifications) {
+    // Run all physics systems using schema-defined specifications
+    crate::systems::run_physics_systems(world, law_specs);
 } 

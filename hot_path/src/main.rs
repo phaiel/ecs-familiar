@@ -10,10 +10,11 @@ mod common;
 mod components;
 mod ecs;
 mod generated;
-mod law_executor;
+mod systems;
 mod schemas;
 mod config;
 mod graphql;
+mod persistence;
 
 use common::GqlCommand;
 
@@ -24,13 +25,16 @@ fn uuid4() -> Uuid {
 
 struct MemorySystem {
     world: World,
+    world_ref: std::sync::Arc<std::sync::Mutex<World>>,
     command_receiver: Receiver<GqlCommand>,
     last_status_update: SystemTime,
     entity_count_history: Vec<usize>,
+    start_time: SystemTime,
+    law_specifications: systems::LawSpecifications,
 }
 
 impl MemorySystem {
-    fn new(rx: Receiver<GqlCommand>) -> Self {
+    fn new(rx: Receiver<GqlCommand>, world_ref: std::sync::Arc<std::sync::Mutex<World>>) -> Self {
         let mut world = World::new();
         let current_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -71,16 +75,23 @@ impl MemorySystem {
             initial_decay
         ));
 
-        // Load predefined laws from schema
-        Self::load_schema_laws(&mut world);
+        // Load law specifications from schema (not as entities, but as system configs)
+        let law_specifications = systems::LawSpecifications::from_schema();
 
-        println!("{}", "🧵 Memory System initialized with initial thread and schema laws".bright_green());
+        // Note: World sync will be handled differently since World doesn't implement Clone
+        // We'll implement entity sharing through queries instead
+
+        println!("{}", "⚖️  Loaded 2 physics systems (decay, resonance)".bright_purple());
+        println!("{}", "🧵 Memory System initialized with initial thread and physics systems".bright_green());
 
         Self {
             world,
+            world_ref,
             command_receiver: rx,
             last_status_update: SystemTime::now(),
-            entity_count_history: vec![1],
+            entity_count_history: vec![1], // Just the initial thread
+            start_time: SystemTime::now(),
+            law_specifications,
         }
     }
 
@@ -92,6 +103,9 @@ impl MemorySystem {
             // Run ECS systems
             self.run_ecs_systems();
             
+            // Note: For now, GraphQL queries work on a separate world state
+            // TODO: Implement proper entity sharing mechanism
+            
             // Show status updates every 5 seconds
             if self.last_status_update.elapsed().unwrap() > Duration::from_secs(5) {
                 self.show_status();
@@ -102,6 +116,9 @@ impl MemorySystem {
             thread::sleep(Duration::from_millis(100));
         }
     }
+
+    // Note: Removed sync_world_ref since World doesn't implement Clone
+    // TODO: Implement proper entity data sharing mechanism for GraphQL queries
 
     fn process_commands(&mut self) {
         let current_time = SystemTime::now()
@@ -327,19 +344,41 @@ impl MemorySystem {
                     ));
                     println!("{} {} → {}", "🔗 Created binding:".bright_cyan(), moment_id[0..8].bright_white(), thread_id[0..8].bright_white());
                 }
-
+                GqlCommand::UpdateStrength { entity_id, new_strength } => {
+                    // Parse entity ID (for now just log, real implementation would find entity by ID)
+                    println!("{} {} to {}", "⚡ Update strength:".bright_yellow(), entity_id[0..8].bright_white(), new_strength.to_string().bright_green());
+                    
+                    // TODO: Implement entity lookup by ID and component mutation
+                    // This requires adding entity ID tracking to components
+                }
+                GqlCommand::UpdateDisplayText { entity_id, new_text } => {
+                    println!("{} {} to '{}'", "📝 Update text:".bright_yellow(), entity_id[0..8].bright_white(), new_text.bright_white());
+                    
+                    // TODO: Implement entity lookup by ID and component mutation
+                }
+                GqlCommand::AddEntityTag { entity_id, tag } => {
+                    println!("{} {} with tag '{}'", "🏷️ Add tag:".bright_yellow(), entity_id[0..8].bright_white(), tag.bright_cyan());
+                    
+                    // TODO: Implement append-only tag addition to BaseEntity
+                }
+                GqlCommand::SoftDeleteEntity { entity_id } => {
+                    println!("{} {}", "🗑️ Soft delete:".bright_red(), entity_id[0..8].bright_white());
+                    
+                    // TODO: Implement soft deletion by setting deleted_at timestamp
+                }
             }
         }
     }
 
     fn run_ecs_systems(&mut self) {
-        // Run all schema-driven systems via law executor
-        ecs::run_systems(&mut self.world);
+        // Run all ECS systems (which delegate to physics systems)
+        ecs::run_systems(&mut self.world, &self.law_specifications);
     }
 
     fn show_status(&mut self) {
         let entity_count = self.count_entities_by_type();
         let total_entities = entity_count.values().sum::<usize>();
+        let system_stats = systems::get_system_stats(&self.world, &self.law_specifications);
         
         self.entity_count_history.push(total_entities);
         if self.entity_count_history.len() > 10 {
@@ -348,6 +387,14 @@ impl MemorySystem {
 
         println!("\n{}", "━━━ Memory System Status ━━━".bright_purple().bold());
         
+        // Show physics systems status
+        println!("{} {} systems affecting {} entities", 
+            "⚖️".bright_purple(), 
+            system_stats.active_systems.to_string().bright_yellow(),
+            system_stats.affected_entities.to_string().bright_cyan()
+        );
+        
+        // Show entity counts (excluding law entities since laws are now systems)
         for (entity_type, count) in &entity_count {
             let icon = match entity_type.as_str() {
                 "thread" => "🧵",
@@ -356,7 +403,6 @@ impl MemorySystem {
                 "bond" => "🔗",
                 "filament" => "🌱",
                 "motif" => "🎨",
-                "law" => "⚖️",
                 _ => "📦",
             };
             println!("{} {}: {}", icon, entity_type.bright_white(), count.to_string().bright_yellow());
@@ -388,56 +434,8 @@ impl MemorySystem {
         counts
     }
 
-    /// Load predefined laws from the cold path schema
-    fn load_schema_laws(world: &mut World) {
-        // Decay Law - mathematical physics from cold path
-        let decay_law = components::Law {
-            name: "decay".to_string(),
-            trigger: components::LawTrigger::OnTick,
-            applies_to: vec!["filament".to_string(), "motif".to_string()],
-            formula: "strength = strength * pow(0.5, time_elapsed / half_life)".to_string(),
-            variables: vec!["strength".to_string(), "half_life".to_string(), "last_update".to_string()],
-            constants: serde_json::Map::new(),
-            constraints: Some({
-                let mut constraints = serde_json::Map::new();
-                let mut strength_constraint = serde_json::Map::new();
-                strength_constraint.insert("min".to_string(), serde_json::json!(0.1));
-                constraints.insert("strength".to_string(), serde_json::Value::Object(strength_constraint));
-                constraints
-            }),
-        };
-        
-        world.spawn((
-            decay_law,
-            components::DisplayText("Physics: Exponential Decay".to_string()),
-            components::EntityType("law".to_string()),
-        ));
-
-        // Resonance Law - mathematical physics from cold path
-        let resonance_law = components::Law {
-            name: "resonance".to_string(), 
-            trigger: components::LawTrigger::OnAffinityMatch,
-            applies_to: vec!["filament".to_string()],
-            formula: "strength = min(strength * multiplier, max_strength) if strength > threshold else strength".to_string(),
-            variables: vec!["strength".to_string()],
-            constants: {
-                let mut constants = serde_json::Map::new();
-                constants.insert("threshold".to_string(), serde_json::json!(0.85));
-                constants.insert("multiplier".to_string(), serde_json::json!(1.2));
-                constants.insert("max_strength".to_string(), serde_json::json!(1.0));
-                constants
-            },
-            constraints: None,
-        };
-        
-        world.spawn((
-            resonance_law,
-            components::DisplayText("Physics: Resonance Amplification".to_string()),
-            components::EntityType("law".to_string()),
-        ));
-
-        println!("{}", "⚖️  Loaded 2 physical laws (decay, resonance)".bright_purple());
-    }
+    // Note: Law loading is now handled by systems::LawSpecifications::from_schema()
+    // Laws are no longer entities - they are system configurations
 }
 
 fn main() {
@@ -456,14 +454,18 @@ fn main() {
     // Set up GraphQL command channel
     let (tx, rx) = crossbeam_channel::unbounded();
 
+    // Create shared world reference for GraphQL queries
+    let world_ref = std::sync::Arc::new(std::sync::Mutex::new(World::new()));
+    let world_for_gql = world_ref.clone();
+
     // Spawn the GraphQL server in a separate thread
     let gql_sender = tx.clone();
     thread::spawn(move || {
         let rt = Runtime::new().unwrap();
-        rt.block_on(graphql::run_graphql_server(gql_sender));
+        rt.block_on(graphql::run_graphql_server(gql_sender, world_for_gql));
     });
 
     // Initialize and run the memory system
-    let mut memory_system = MemorySystem::new(rx);
+    let mut memory_system = MemorySystem::new(rx, world_ref);
     memory_system.run();
 } 
