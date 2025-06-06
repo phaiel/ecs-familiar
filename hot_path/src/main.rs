@@ -103,8 +103,8 @@ impl MemorySystem {
             // Run ECS systems
             self.run_ecs_systems();
             
-            // Note: For now, GraphQL queries work on a separate world state
-            // TODO: Implement proper entity sharing mechanism
+            // Sync world state for GraphQL queries (lightweight approach)
+            self.sync_world_state();
             
             // Show status updates every 5 seconds
             if self.last_status_update.elapsed().unwrap() > Duration::from_secs(5) {
@@ -114,6 +114,37 @@ impl MemorySystem {
             
             // Sleep briefly to avoid busy-waiting
             thread::sleep(Duration::from_millis(100));
+        }
+    }
+
+    fn sync_world_state(&self) {
+        // Simple approach: serialize essential data for GraphQL queries
+        if let Ok(mut shared_world) = self.world_ref.try_lock() {
+            // Clear and rebuild shared world with current entities
+            shared_world.clear();
+            
+            // Copy entities with essential components for debugging
+            for (entity, (entity_type, display_text)) in self.world.query::<(&components::EntityType, &components::DisplayText)>().iter() {
+                let decay = self.world.get::<&components::DecayComponent>(entity);
+                
+                // Create new entity in shared world with all components at once
+                if let Ok(decay_comp) = decay {
+                    shared_world.spawn((
+                        components::EntityType(entity_type.0.clone()),
+                        components::DisplayText(display_text.0.clone()),
+                        components::DecayComponent {
+                            strength: decay_comp.strength,
+                            half_life: decay_comp.half_life,
+                            last_update: decay_comp.last_update,
+                        },
+                    ));
+                } else {
+                    shared_world.spawn((
+                        components::EntityType(entity_type.0.clone()),
+                        components::DisplayText(display_text.0.clone()),
+                    ));
+                }
+            }
         }
     }
 
@@ -439,6 +470,14 @@ impl MemorySystem {
 }
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    
+    // Check for debug mode
+    if args.len() > 1 && args[1] == "--debug" {
+        debug_mode();
+        return;
+    }
+    
     println!("{}", "🧵 Familiar Memory System Starting...".bright_green().bold());
     println!("{}", "🚀 GraphiQL IDE will be available at http://127.0.0.1:8000".bright_blue());
 
@@ -468,4 +507,72 @@ fn main() {
     // Initialize and run the memory system
     let mut memory_system = MemorySystem::new(rx, world_ref);
     memory_system.run();
+}
+
+/// 🐛 DEBUG MODE: Simple command-line world inspector
+fn debug_mode() {
+    println!("{}", "🐛 Debug Mode - ECS World Inspector".bright_yellow().bold());
+    
+    // Create a simple world with test data
+    let mut world = World::new();
+    let current_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs_f64();
+    
+    // Add some test entities
+    world.spawn((
+        components::EntityType("thread".to_string()),
+        components::DisplayText("Debug Thread".to_string()),
+        components::DecayComponent { strength: 1.0, half_life: 600.0, last_update: current_time },
+    ));
+    
+    world.spawn((
+        components::EntityType("moment".to_string()),
+        components::DisplayText("Debug Memory".to_string()),
+        components::DecayComponent { strength: 0.8, half_life: 300.0, last_update: current_time },
+    ));
+    
+    world.spawn((
+        components::EntityType("filament".to_string()),
+        components::DisplayText("Rapid Decay Thought".to_string()),
+        components::DecayComponent { strength: 0.9, half_life: 45.0, last_update: current_time },
+    ));
+    
+    // Display world state
+    println!("\n{}", "━━━ ECS World State ━━━".bright_purple());
+    
+    let mut entity_count = 0;
+    for (entity, (etype, display_text, decay)) in world.query::<(
+        &components::EntityType,
+        &components::DisplayText,
+        &components::DecayComponent
+    )>().iter() {
+        entity_count += 1;
+        let icon = match etype.0.as_str() {
+            "thread" => "🧵",
+            "moment" => "✨", 
+            "filament" => "🌱",
+            _ => "📦",
+        };
+        
+        println!("{} {} {} (strength: {:.2}, half-life: {}s)", 
+            icon, 
+            format!("Entity-{:?}", entity).bright_blue(),
+            display_text.0.bright_white(),
+            decay.strength.to_string().bright_yellow(),
+            decay.half_life.to_string().bright_cyan()
+        );
+    }
+    
+    println!("\n{} {}", "Total entities:".bright_white(), entity_count.to_string().bright_green());
+    
+    // Show law specifications
+    let law_specs = systems::LawSpecifications::from_schema();
+    println!("\n{}", "━━━ Physics Laws ━━━".bright_purple());
+    println!("🔄 Decay applies to: {:?}", law_specs.decay_law.applies_to);
+    println!("⚡ Resonance threshold: {}", law_specs.resonance_law.threshold);
+    
+    println!("\n{}", "🚀 Run with GraphQL interface: cargo run".bright_green());
+    println!("{}", "📊 GraphiQL available at: http://127.0.0.1:8000".bright_blue());
 } 

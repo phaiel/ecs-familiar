@@ -46,6 +46,23 @@ pub struct ThreadWithMoments {
     pub moments: Vec<EntityInfo>,
 }
 
+#[derive(SimpleObject)]
+pub struct ComponentStat {
+    pub component_name: String,
+    pub count: usize,
+}
+
+#[derive(SimpleObject)]
+pub struct DecayInfo {
+    pub entity_id: String,
+    pub entity_type: String,
+    pub display_text: String,
+    pub current_strength: f32,
+    pub half_life: f32,
+    pub last_update: f64,
+    pub time_since_update: f64,
+}
+
 /// Root query object for the Familiar Memory API.
 /// Provides read-only access to the memory simulation data.
 pub struct QueryRoot;
@@ -224,6 +241,91 @@ impl QueryRoot {
 
         entities.sort_by(|a, b| b.strength.partial_cmp(&a.strength).unwrap_or(std::cmp::Ordering::Equal));
         entities
+    }
+
+    /// 🐛 DEBUG: Dump entire world state for inspection
+    async fn debug_world_dump(&self, ctx: &Context<'_>) -> Vec<EntityInfo> {
+        let world = ctx.data::<Arc<Mutex<World>>>().unwrap();
+        let world = world.lock().unwrap();
+        
+        let mut entities = Vec::new();
+
+        for (entity, (etype, display_text)) in world.query::<(&crate::components::EntityType, &crate::components::DisplayText)>().iter() {
+            let strength = world.get::<&crate::components::DecayComponent>(entity)
+                .map(|decay| decay.strength)
+                .ok();
+
+            entities.push(EntityInfo {
+                id: format!("{:?}", entity),
+                entity_type: etype.0.clone(),
+                display_text: display_text.0.clone(),
+                created_at: "2024-01-01T00:00:00Z".to_string(),
+                strength,
+            });
+        }
+
+        entities
+    }
+
+    /// 🐛 DEBUG: Get raw entity count by component type
+    async fn debug_component_stats(&self, ctx: &Context<'_>) -> Vec<ComponentStat> {
+        let world = ctx.data::<Arc<Mutex<World>>>().unwrap();
+        let world = world.lock().unwrap();
+        
+        let mut stats = Vec::new();
+        
+        // Count entities with different component combinations
+        let mut entity_type_count = 0;
+        let mut display_text_count = 0;
+        let mut decay_component_count = 0;
+        
+        for (_entity, _) in world.query::<&crate::components::EntityType>().iter() {
+            entity_type_count += 1;
+        }
+        
+        for (_entity, _) in world.query::<&crate::components::DisplayText>().iter() {
+            display_text_count += 1;
+        }
+        
+        for (_entity, _) in world.query::<&crate::components::DecayComponent>().iter() {
+            decay_component_count += 1;
+        }
+        
+        stats.push(ComponentStat { component_name: "EntityType".to_string(), count: entity_type_count });
+        stats.push(ComponentStat { component_name: "DisplayText".to_string(), count: display_text_count });
+        stats.push(ComponentStat { component_name: "DecayComponent".to_string(), count: decay_component_count });
+        
+        stats
+    }
+
+    /// 🐛 DEBUG: Watch entity decay in real-time
+    async fn debug_decay_watch(&self, ctx: &Context<'_>) -> Vec<DecayInfo> {
+        let world = ctx.data::<Arc<Mutex<World>>>().unwrap();
+        let world = world.lock().unwrap();
+        
+        let mut decay_info = Vec::new();
+
+        for (entity, (etype, display_text, decay)) in world.query::<(
+            &crate::components::EntityType,
+            &crate::components::DisplayText, 
+            &crate::components::DecayComponent
+        )>().iter() {
+            decay_info.push(DecayInfo {
+                entity_id: format!("{:?}", entity),
+                entity_type: etype.0.clone(),
+                display_text: display_text.0.clone(),
+                current_strength: decay.strength,
+                half_life: decay.half_life,
+                last_update: decay.last_update,
+                time_since_update: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs_f64() - decay.last_update,
+            });
+        }
+
+        decay_info.sort_by(|a, b| b.current_strength.partial_cmp(&a.current_strength).unwrap_or(std::cmp::Ordering::Equal));
+        decay_info
     }
 }
 
@@ -434,39 +536,46 @@ async fn graphiql() -> impl IntoResponse {
         root.render(
             React.createElement(GraphiQL, {
                 fetcher: graphQLFetcher,
-                defaultQuery: `# Welcome to Familiar Memory GraphiQL!
+                defaultQuery: `# 🐛 ECS Familiar - Debug Interface
 # 
-# GraphiQL is an in-browser IDE for writing, validating, and
-# testing GraphQL queries.
+# This GraphiQL interface lets you inspect the memory simulation world.
+# The system runs physics laws (decay, resonance) on entities in real-time.
 #
-# Type queries into this side of the screen, and you will see 
-# intelligent typeaheads aware of the current GraphQL type schema 
-# and live syntax and validation errors highlighted within the text.
+# 🔍 QUICK DEBUG QUERIES:
 #
-# GraphQL queries typically start with a "{" character. Lines that start
-# with a # are ignored.
+# 1. See all entities in the world:
+# { debugWorldDump { entityType displayText strength } }
 #
-# Example query:
-# Uncomment the line below to run a simple health check
+# 2. Check component statistics:
+# { debugComponentStats { componentName count } }
 #
-# { health }
+# 3. Watch entity decay in real-time:
+# { debugDecayWatch { entityType displayText currentStrength halfLife timeSinceUpdate } }
 #
-# Example mutations:
+# 4. System overview:
+# { memoryStats { totalEntities entitiesByType { entityType count } } }
+#
+# 🧪 CREATE TEST ENTITIES:
 #
 # mutation {
-#   createThread(name: "Alice", threadType: "person")
-#   createMoment(text: "A beautiful memory", threadId: "Alice")  
+#   createMoment(text: "Test memory", threadId: "test")
+#   createFilament(content: "Fast-decaying thought", threadName: "test")  
+#   createMotif(pattern: "recurring-theme", strength: 0.9)
 # }
 #
-# Keyboard shortcuts:
-#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)
+# 🔬 ENTITY FILTERING:
 #
-#  Merge Query (deprecated):  Shift-Ctrl-M (or press the merge button above)
+# { entitiesByType(entityType: "moment", limit: 10) { displayText strength } }
+# { strongEntities(minStrength: 0.5) { entityType displayText strength } }
+# { searchEntities(query: "test") { entityType displayText } }
 #
-#       Run Query:  Ctrl-Enter (or press the play button above)
+# ⚖️ PHYSICS LAWS ACTIVE:
+# - Decay: Affects moments, filaments, motifs (exponential decay over time)
+# - Resonance: Amplifies filaments when strength > 0.85
 #
-#   Auto Complete:  Ctrl-Space (or just start typing)
-#`,
+# Press Ctrl+Enter to run queries!
+
+{ debugWorldDump { entityType displayText strength } }`,
                 headerEditorEnabled: true,
                 shouldPersistHeaders: true,
             })
