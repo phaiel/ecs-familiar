@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "familiar-cold-path"
+version = "0.1.0"
+description = "Schema definitions for the Familiar Game Engine"
+authors = ["Familiar AI <dev@familiar.ai>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pydantic = "^2.5.0"
+typer = {extras = ["all"], version = "^0.9.0"}
+pyyaml = "^6.0"
+pydantic-settings = "^2.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api" 

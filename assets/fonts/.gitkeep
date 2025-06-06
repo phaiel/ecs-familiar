@@ -1,0 +1,4 @@
+# This file is a placeholder to ensure the directory is created.
+# Please replace this with a valid .ttf or .otf font file.
+# The Bevy application in the hot_path expects a font at:
+# assets/fonts/FiraSans-Bold.ttf 

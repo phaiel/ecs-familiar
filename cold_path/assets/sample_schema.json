@@ -1,0 +1,1376 @@
+{
+  "schema_version": "1.0.0",
+  "generated_by": "familiar-cold-path",
+  "models": {
+    "BaseEntity": {
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "org_id": {
+          "format": "uuid",
+          "title": "Org Id",
+          "type": "string"
+        },
+        "owner_id": {
+          "format": "uuid",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deleted At"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "component_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Component Ids",
+          "type": "array"
+        },
+        "sub_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sub Type"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "household",
+            "org",
+            "public"
+          ],
+          "description": "<enum 'Visibility'>"
+        },
+        "security_level": {
+          "default": 0,
+          "title": "Security Level",
+          "type": "integer"
+        },
+        "access_scope": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "view",
+              "edit",
+              "admin"
+            ],
+            "description": "<enum 'AccessScope'>"
+          },
+          "title": "Access Scope",
+          "type": "array"
+        },
+        "version": {
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "parent_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Version"
+        }
+      },
+      "required": [
+        "org_id",
+        "owner_id"
+      ],
+      "title": "BaseEntity",
+      "type": "object"
+    },
+    "BaseComponent": {
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "metadata": {
+          "default": [],
+          "items": {
+            "type": "string",
+            "format": null
+          },
+          "title": "Metadata",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "BaseComponent",
+      "type": "object"
+    },
+    "Metadata": {
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "title": "Value"
+        },
+        "type": {
+          "enum": [
+            "str",
+            "float",
+            "int",
+            "datetime",
+            "bool"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "value",
+        "type"
+      ],
+      "title": "Metadata",
+      "type": "object"
+    },
+    "Visibility": {
+      "type": "string",
+      "enum": [
+        "PRIVATE",
+        "HOUSEHOLD",
+        "ORG",
+        "PUBLIC"
+      ],
+      "description": "<enum 'Visibility'>"
+    },
+    "AccessScope": {
+      "type": "string",
+      "enum": [
+        "VIEW",
+        "EDIT",
+        "ADMIN"
+      ],
+      "description": "<enum 'AccessScope'>"
+    },
+    "Cardinality": {
+      "type": "string",
+      "enum": [
+        "ACTOR",
+        "OBSERVER",
+        "RECIPIENT",
+        "CO_PARTICIPANT",
+        "TARGET"
+      ],
+      "description": "<enum 'Cardinality'>"
+    },
+    "Moment": {
+      "description": "Individual memory moment with explicit authorship and thread binding",
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "org_id": {
+          "format": "uuid",
+          "title": "Org Id",
+          "type": "string"
+        },
+        "owner_id": {
+          "format": "uuid",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deleted At"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "component_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Component Ids",
+          "type": "array"
+        },
+        "sub_type": {
+          "const": "moment",
+          "default": "moment",
+          "title": "Sub Type",
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "household",
+            "org",
+            "public"
+          ],
+          "description": "<enum 'Visibility'>"
+        },
+        "security_level": {
+          "default": 0,
+          "title": "Security Level",
+          "type": "integer"
+        },
+        "access_scope": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "view",
+              "edit",
+              "admin"
+            ],
+            "description": "<enum 'AccessScope'>"
+          },
+          "title": "Access Scope",
+          "type": "array"
+        },
+        "version": {
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "parent_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Version"
+        },
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "author_id": {
+          "format": "uuid",
+          "title": "Author Id",
+          "type": "string"
+        },
+        "binding_hint": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Binding Hint"
+        },
+        "binding_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Binding Id"
+        },
+        "cardinality": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "actor",
+                "observer",
+                "recipient",
+                "co-participant",
+                "target"
+              ],
+              "description": "<enum 'Cardinality'>"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "org_id",
+        "owner_id",
+        "thread_id",
+        "author_id"
+      ],
+      "title": "Moment",
+      "type": "object"
+    },
+    "Binding": {
+      "description": "Cross-thread connection as a composite of binding points",
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "org_id": {
+          "format": "uuid",
+          "title": "Org Id",
+          "type": "string"
+        },
+        "owner_id": {
+          "format": "uuid",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deleted At"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "component_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Component Ids",
+          "type": "array"
+        },
+        "sub_type": {
+          "const": "binding",
+          "default": "binding",
+          "title": "Sub Type",
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "household",
+            "org",
+            "public"
+          ],
+          "description": "<enum 'Visibility'>"
+        },
+        "security_level": {
+          "default": 0,
+          "title": "Security Level",
+          "type": "integer"
+        },
+        "access_scope": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "view",
+              "edit",
+              "admin"
+            ],
+            "description": "<enum 'AccessScope'>"
+          },
+          "title": "Access Scope",
+          "type": "array"
+        },
+        "version": {
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "parent_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Version"
+        },
+        "points": {
+          "default": [],
+          "items": {
+            "type": "string",
+            "format": null
+          },
+          "title": "Points",
+          "type": "array"
+        },
+        "thread_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Thread Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "org_id",
+        "owner_id"
+      ],
+      "title": "Binding",
+      "type": "object"
+    },
+    "BindingPoint": {
+      "description": "A binding point representing thread \u2194 moment \u2194 role (1-to-1-to-1 mapping)",
+      "properties": {
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "moment_id": {
+          "format": "uuid",
+          "title": "Moment Id",
+          "type": "string"
+        },
+        "cardinality": {
+          "enum": [
+            "actor",
+            "observer",
+            "recipient",
+            "co-participant",
+            "target"
+          ],
+          "title": "Cardinality",
+          "type": "string"
+        }
+      },
+      "required": [
+        "thread_id",
+        "moment_id",
+        "cardinality"
+      ],
+      "title": "BindingPoint",
+      "type": "object"
+    },
+    "Thread": {
+      "description": "Memory thread organizing related moments",
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "org_id": {
+          "format": "uuid",
+          "title": "Org Id",
+          "type": "string"
+        },
+        "owner_id": {
+          "format": "uuid",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deleted At"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "component_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Component Ids",
+          "type": "array"
+        },
+        "sub_type": {
+          "const": "thread",
+          "default": "thread",
+          "title": "Sub Type",
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "household",
+            "org",
+            "public"
+          ],
+          "description": "<enum 'Visibility'>"
+        },
+        "security_level": {
+          "default": 0,
+          "title": "Security Level",
+          "type": "integer"
+        },
+        "access_scope": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "view",
+              "edit",
+              "admin"
+            ],
+            "description": "<enum 'AccessScope'>"
+          },
+          "title": "Access Scope",
+          "type": "array"
+        },
+        "version": {
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "parent_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Version"
+        }
+      },
+      "required": [
+        "org_id",
+        "owner_id"
+      ],
+      "title": "Thread",
+      "type": "object"
+    },
+    "Filament": {
+      "description": "Temporal memory filament",
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "org_id": {
+          "format": "uuid",
+          "title": "Org Id",
+          "type": "string"
+        },
+        "owner_id": {
+          "format": "uuid",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deleted At"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "component_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Component Ids",
+          "type": "array"
+        },
+        "sub_type": {
+          "const": "filament",
+          "default": "filament",
+          "title": "Sub Type",
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "household",
+            "org",
+            "public"
+          ],
+          "description": "<enum 'Visibility'>"
+        },
+        "security_level": {
+          "default": 0,
+          "title": "Security Level",
+          "type": "integer"
+        },
+        "access_scope": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "view",
+              "edit",
+              "admin"
+            ],
+            "description": "<enum 'AccessScope'>"
+          },
+          "title": "Access Scope",
+          "type": "array"
+        },
+        "version": {
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "parent_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Version"
+        }
+      },
+      "required": [
+        "org_id",
+        "owner_id"
+      ],
+      "title": "Filament",
+      "type": "object"
+    },
+    "Motif": {
+      "description": "Recurring memory pattern",
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "org_id": {
+          "format": "uuid",
+          "title": "Org Id",
+          "type": "string"
+        },
+        "owner_id": {
+          "format": "uuid",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deleted At"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "component_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Component Ids",
+          "type": "array"
+        },
+        "sub_type": {
+          "const": "motif",
+          "default": "motif",
+          "title": "Sub Type",
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "household",
+            "org",
+            "public"
+          ],
+          "description": "<enum 'Visibility'>"
+        },
+        "security_level": {
+          "default": 0,
+          "title": "Security Level",
+          "type": "integer"
+        },
+        "access_scope": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "view",
+              "edit",
+              "admin"
+            ],
+            "description": "<enum 'AccessScope'>"
+          },
+          "title": "Access Scope",
+          "type": "array"
+        },
+        "version": {
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "parent_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Version"
+        }
+      },
+      "required": [
+        "org_id",
+        "owner_id"
+      ],
+      "title": "Motif",
+      "type": "object"
+    },
+    "Bond": {
+      "description": "Cross-thread affinity bond",
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "org_id": {
+          "format": "uuid",
+          "title": "Org Id",
+          "type": "string"
+        },
+        "owner_id": {
+          "format": "uuid",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deleted At"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "component_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Component Ids",
+          "type": "array"
+        },
+        "sub_type": {
+          "const": "bond",
+          "default": "bond",
+          "title": "Sub Type",
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "household",
+            "org",
+            "public"
+          ],
+          "description": "<enum 'Visibility'>"
+        },
+        "security_level": {
+          "default": 0,
+          "title": "Security Level",
+          "type": "integer"
+        },
+        "access_scope": {
+          "items": {
+            "type": "string",
+            "enum": [
+              "view",
+              "edit",
+              "admin"
+            ],
+            "description": "<enum 'AccessScope'>"
+          },
+          "title": "Access Scope",
+          "type": "array"
+        },
+        "version": {
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "parent_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Version"
+        },
+        "thread_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Thread Ids",
+          "type": "array"
+        },
+        "affinity_score": {
+          "title": "Affinity Score",
+          "type": "number"
+        },
+        "bond_strength": {
+          "title": "Bond Strength",
+          "type": "number"
+        },
+        "component_context": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Component Context",
+          "type": "array"
+        }
+      },
+      "required": [
+        "org_id",
+        "owner_id",
+        "affinity_score",
+        "bond_strength"
+      ],
+      "title": "Bond",
+      "type": "object"
+    },
+    "Law": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "trigger": {
+          "enum": [
+            "on_observation",
+            "on_tick",
+            "on_affinity_match"
+          ],
+          "title": "Trigger",
+          "type": "string"
+        },
+        "applies_to": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Applies To",
+          "type": "array"
+        },
+        "formula": {
+          "title": "Formula",
+          "type": "string"
+        },
+        "variables": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Variables",
+          "type": "array"
+        },
+        "constants": {
+          "additionalProperties": true,
+          "title": "Constants",
+          "type": "object"
+        },
+        "constraints": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Constraints"
+        }
+      },
+      "required": [
+        "name",
+        "trigger",
+        "applies_to",
+        "formula",
+        "variables",
+        "constants"
+      ],
+      "title": "Law",
+      "type": "object"
+    },
+    "DecayLaw": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "trigger": {
+          "enum": [
+            "on_observation",
+            "on_tick",
+            "on_affinity_match"
+          ],
+          "title": "Trigger",
+          "type": "string"
+        },
+        "applies_to": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Applies To",
+          "type": "array"
+        },
+        "formula": {
+          "title": "Formula",
+          "type": "string"
+        },
+        "variables": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Variables",
+          "type": "array"
+        },
+        "constants": {
+          "additionalProperties": true,
+          "title": "Constants",
+          "type": "object"
+        },
+        "constraints": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Constraints"
+        }
+      },
+      "required": [
+        "name",
+        "trigger",
+        "applies_to",
+        "formula",
+        "variables",
+        "constants"
+      ],
+      "title": "Law",
+      "type": "object"
+    },
+    "ResonanceLaw": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "trigger": {
+          "enum": [
+            "on_observation",
+            "on_tick",
+            "on_affinity_match"
+          ],
+          "title": "Trigger",
+          "type": "string"
+        },
+        "applies_to": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Applies To",
+          "type": "array"
+        },
+        "formula": {
+          "title": "Formula",
+          "type": "string"
+        },
+        "variables": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Variables",
+          "type": "array"
+        },
+        "constants": {
+          "additionalProperties": true,
+          "title": "Constants",
+          "type": "object"
+        },
+        "constraints": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Constraints"
+        }
+      },
+      "required": [
+        "name",
+        "trigger",
+        "applies_to",
+        "formula",
+        "variables",
+        "constants"
+      ],
+      "title": "Law",
+      "type": "object"
+    },
+    "BindingLaw": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "trigger": {
+          "enum": [
+            "on_observation",
+            "on_tick",
+            "on_affinity_match"
+          ],
+          "title": "Trigger",
+          "type": "string"
+        },
+        "applies_to": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Applies To",
+          "type": "array"
+        },
+        "formula": {
+          "title": "Formula",
+          "type": "string"
+        },
+        "variables": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Variables",
+          "type": "array"
+        },
+        "constants": {
+          "additionalProperties": true,
+          "title": "Constants",
+          "type": "object"
+        },
+        "constraints": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Constraints"
+        }
+      },
+      "required": [
+        "name",
+        "trigger",
+        "applies_to",
+        "formula",
+        "variables",
+        "constants"
+      ],
+      "title": "Law",
+      "type": "object"
+    }
+  }
+}

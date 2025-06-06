@@ -1,0 +1,15 @@
+name: "Core Simulation Loop"
+tasks:
+  - name: "resonance"
+    inputs: ["moment", "filament"]
+    outputs: ["filament"]
+    parameters:
+      resonance_strength: 0.7
+      threshold: 0.85
+
+  - name: "decay"
+    inputs: ["filament", "motif"]
+    outputs: ["filament", "motif"]
+    parameters:
+      half_life: 5
+      min_strength: 0.1 

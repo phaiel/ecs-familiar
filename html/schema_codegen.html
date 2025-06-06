@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Familiar Schema Code Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e, #2d1b69);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #f9e2af;
+            text-shadow: 0 0 10px rgba(249, 226, 175, 0.5);
+        }
+        
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .left-panel, .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .schema-editor, .code-output {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .entity-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .entity-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .entity-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .entity-item.moment { border-color: #f9e2af; }
+        .entity-item.thread { border-color: #a6e3a1; }
+        .entity-item.binding { border-color: #cba6f7; }
+        .entity-item.bond { border-color: #fab387; }
+        .entity-item.motif { border-color: #f38ba8; }
+        .entity-item.filament { border-color: #94e2d5; }
+        
+        .entity-item.selected {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+        }
+        
+        .entity-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .field-editor {
+            margin-top: 10px;
+        }
+        
+        .field-input {
+            display: flex;
+            gap: 10px;
+            margin: 5px 0;
+            align-items: center;
+        }
+        
+        .field-input input, .field-input select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            color: white;
+            padding: 8px;
+            flex: 1;
+        }
+        
+        .add-field-btn, .generate-btn, .sync-btn {
+            background: #89b4fa;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+        
+        .add-field-btn:hover, .generate-btn:hover, .sync-btn:hover {
+            background: #74c0fc;
+        }
+        
+        .generate-btn {
+            background: #a6e3a1;
+            color: #1e1e2e;
+            font-weight: bold;
+            padding: 12px 25px;
+            margin: 10px 0;
+        }
+        
+        .sync-btn {
+            background: #f38ba8;
+        }
+        
+        .code-display {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #cba6f7;
+            border-radius: 8px;
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            position: relative;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #fab387;
+            border: none;
+            color: #1e1e2e;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .tab.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            background: #89b4fa;
+            color: white;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 Familiar Schema Code Generator</h1>
+        <p>Visual schema editor with live Python/Rust code generation</p>
+    </div>
+
+    <div id="status" class="status">
+        Ready to Generate
+    </div>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="schema-editor">
+                <h3>📊 Schema Entities</h3>
+                <div class="controls">
+                    <select id="entityType">
+                        <option value="moment">✨ Moment</option>
+                        <option value="thread">🧵 Thread</option>
+                        <option value="binding">🔗 Binding</option>
+                        <option value="bond">🔗 Bond</option>
+                        <option value="motif">🎨 Motif</option>
+                        <option value="filament">🌱 Filament</option>
+                    </select>
+                    <button onclick="addEntity()" class="add-field-btn">+ Add Entity</button>
+                    <button onclick="syncWithRunningApp()" class="sync-btn">🔄 Sync Live</button>
+                </div>
+                <div id="entityList" class="entity-list">
+                    <!-- Entities will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="code-output">
+                <h3>🐍 Generated Code</h3>
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('pydantic')">Pydantic Models</button>
+                    <button class="tab" onclick="switchTab('rust')">Rust Components</button>
+                    <button class="tab" onclick="switchTab('config')">Config YAML</button>
+                </div>
+                <button onclick="generateCode()" class="generate-btn">🚀 Generate Code</button>
+                <div class="code-display" id="codeDisplay">
+                    Click "Generate Code" to see output...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let entities = {
+            moment: {
+                name: 'Moment',
+                icon: '✨',
+                fields: [
+                    { name: 'text', type: 'str', required: true },
+                    { name: 'thread_id', type: 'u32', required: true },
+                    { name: 'timestamp', type: 'float', required: false },
+                    { name: 'emotional_charge', type: 'float', required: false },
+                    { name: 'sensory_details', type: 'List[str]', required: false }
+                ]
+            },
+            thread: {
+                name: 'Thread',
+                icon: '🧵',
+                fields: [
+                    { name: 'name', type: 'str', required: true },
+                    { name: 'thread_type', type: 'str', required: true },
+                    { name: 'creation_time', type: 'float', required: false },
+                    { name: 'context_vector', type: 'List[float]', required: false }
+                ]
+            },
+            binding: {
+                name: 'Binding',
+                icon: '🔗',
+                fields: [
+                    { name: 'moment_id', type: 'u32', required: true },
+                    { name: 'thread_id', type: 'u32', required: true },
+                    { name: 'binding_strength', type: 'float', required: false },
+                    { name: 'binding_type', type: 'str', required: false }
+                ]
+            },
+            bond: {
+                name: 'Bond',
+                icon: '🔗',
+                fields: [
+                    { name: 'thread_ids', type: 'List[str]', required: true },
+                    { name: 'affinity_score', type: 'float', required: true },
+                    { name: 'bond_strength', type: 'float', required: false },
+                    { name: 'component_context', type: 'List[str]', required: false }
+                ]
+            },
+            motif: {
+                name: 'Motif',
+                icon: '🎨',
+                fields: [
+                    { name: 'pattern', type: 'str', required: true },
+                    { name: 'strength', type: 'float', required: true },
+                    { name: 'emergence_conditions', type: 'List[str]', required: false },
+                    { name: 'pattern_frequency', type: 'float', required: false }
+                ]
+            },
+            filament: {
+                name: 'Filament',
+                icon: '🌱',
+                fields: [
+                    { name: 'content', type: 'str', required: true },
+                    { name: 'thread_name', type: 'str', required: true },
+                    { name: 'interpretation_weight', type: 'float', required: false },
+                    { name: 'context_depth', type: 'u32', required: false }
+                ]
+            }
+        };
+
+        let currentTab = 'pydantic';
+        let selectedEntity = null;
+
+        function renderEntities() {
+            const entityList = document.getElementById('entityList');
+            entityList.innerHTML = '';
+
+            Object.keys(entities).forEach(key => {
+                const entity = entities[key];
+                const div = document.createElement('div');
+                div.className = `entity-item ${key} ${selectedEntity === key ? 'selected' : ''}`;
+                div.onclick = () => selectEntity(key);
+                
+                div.innerHTML = `
+                    <div class="entity-name">
+                        <span>${entity.icon}</span>
+                        <span>${entity.name}</span>
+                    </div>
+                    <div class="field-editor">
+                        ${entity.fields.map((field, idx) => `
+                            <div class="field-input">
+                                <input type="text" value="${field.name}" onchange="updateField('${key}', ${idx}, 'name', this.value)" placeholder="Field name">
+                                <select onchange="updateField('${key}', ${idx}, 'type', this.value)">
+                                    <option value="str" ${field.type === 'str' ? 'selected' : ''}>String</option>
+                                    <option value="int" ${field.type === 'int' ? 'selected' : ''}>Integer</option>
+                                    <option value="float" ${field.type === 'float' ? 'selected' : ''}>Float</option>
+                                    <option value="bool" ${field.type === 'bool' ? 'selected' : ''}>Boolean</option>
+                                    <option value="List[str]" ${field.type === 'List[str]' ? 'selected' : ''}>List[String]</option>
+                                    <option value="List[float]" ${field.type === 'List[float]' ? 'selected' : ''}>List[Float]</option>
+                                    <option value="u32" ${field.type === 'u32' ? 'selected' : ''}>u32</option>
+                                </select>
+                                <input type="checkbox" ${field.required ? 'checked' : ''} onchange="updateField('${key}', ${idx}, 'required', this.checked)">
+                                <label>Required</label>
+                                <button onclick="removeField('${key}', ${idx})" style="background: #f38ba8; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer;">×</button>
+                            </div>
+                        `).join('')}
+                        <button onclick="addField('${key}')" class="add-field-btn">+ Add Field</button>
+                    </div>
+                `;
+                entityList.appendChild(div);
+            });
+        }
+
+        function selectEntity(key) {
+            selectedEntity = selectedEntity === key ? null : key;
+            renderEntities();
+        }
+
+        function addEntity() {
+            const type = document.getElementById('entityType').value;
+            const newKey = `${type}_${Date.now()}`;
+            entities[newKey] = {
+                name: `Custom${entities[type].name}`,
+                icon: entities[type].icon,
+                fields: [{ name: 'id', type: 'u32', required: true }]
+            };
+            renderEntities();
+        }
+
+        function addField(entityKey) {
+            entities[entityKey].fields.push({ name: 'new_field', type: 'str', required: false });
+            renderEntities();
+        }
+
+        function removeField(entityKey, fieldIndex) {
+            entities[entityKey].fields.splice(fieldIndex, 1);
+            renderEntities();
+        }
+
+        function updateField(entityKey, fieldIndex, property, value) {
+            entities[entityKey].fields[fieldIndex][property] = value;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function generateCode() {
+            const display = document.getElementById('codeDisplay');
+            
+            if (currentTab === 'pydantic') {
+                display.textContent = `# Generated Pydantic models for Familiar Memory System
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
+class Moment(BaseModel):
+    """Individual memory scoped to a specific thread"""
+    text: str = Field(description="The textual content of the memory")
+    thread_id: int = Field(description="The thread this moment belongs to") 
+    timestamp: Optional[float] = Field(default=None, description="When this moment occurred")
+    emotional_charge: Optional[float] = Field(default=None, ge=-1.0, le=1.0)
+    sensory_details: Optional[List[str]] = Field(default=None)
+
+class Thread(BaseModel):
+    """Memory category organizing related moments"""
+    name: str = Field(description="Unique identifier for the thread")
+    thread_type: str = Field(description="Category: person, place, event, concept")
+    creation_time: Optional[float] = Field(default=None)
+    context_vector: Optional[List[float]] = Field(default=None)
+
+class Binding(BaseModel):
+    """Cross-thread connection in binding-centric model"""
+    moment_id: int = Field(description="The moment to bind")
+    thread_id: int = Field(description="The secondary thread to bind to")
+    binding_strength: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    binding_type: Optional[str] = Field(default=None)`;
+            
+            } else if (currentTab === 'rust') {
+                display.textContent = `// Generated Rust components for Familiar Memory System
+use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
+pub struct Moment {
+    pub text: String,
+    pub thread_id: u32,
+    pub timestamp: Option<f64>,
+    pub emotional_charge: Option<f32>,
+    pub sensory_details: Option<Vec<String>>,
+}
+
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
+pub struct Thread {
+    pub name: String,
+    pub thread_type: String,
+    pub creation_time: Option<f64>,
+    pub context_vector: Option<Vec<f32>>,
+}
+
+#[derive(Component, Debug, Clone, Serialize, Deserialize)] 
+pub struct Binding {
+    pub moment_id: u32,
+    pub thread_id: u32,
+    pub binding_strength: Option<f32>,
+    pub binding_type: Option<String>,
+}
+
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
+pub struct DecayComponent {
+    pub strength: f32,
+    pub half_life: f32,
+    pub last_update: f64,
+}`;
+            
+            } else if (currentTab === 'config') {
+                display.textContent = `# Generated configuration for Familiar Memory System
+memory_system:
+  entities:
+    moment:
+      name: "Moment"
+      icon: "✨"
+      decay_half_life: 300.0
+      
+    thread:
+      name: "Thread" 
+      icon: "🧵"
+      decay_half_life: 600.0
+      
+    binding:
+      name: "Binding"
+      icon: "🔗"
+      decay_half_life: 450.0
+      
+  visualization:
+    thread_colors:
+      person: "#a6e3a1"
+      place: "#fab387"
+      event: "#cba6f7"
+      concept: "#f38ba8"
+    
+    sizes:
+      moment_radius: 0.3
+      thread_thickness: 0.05
+      binding_radius: 0.2
+      
+    effects:
+      convergence_strength: 1.5
+      emissive_glow: 0.3
+      animation_speed: 2.0`;
+            }
+        }
+
+        async function syncWithRunningApp() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: `{
+                            __schema {
+                                types {
+                                    name
+                                    fields {
+                                        name
+                                        type {
+                                            name
+                                        }
+                                    }
+                                }
+                            }
+                        }`
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('status').textContent = '✅ Synced with Live App';
+                    document.getElementById('status').style.background = '#a6e3a1';
+                    console.log('Schema data:', data);
+                } else {
+                    throw new Error('Server not responding');
+                }
+            } catch (error) {
+                document.getElementById('status').textContent = '❌ Sync Failed';
+                document.getElementById('status').style.background = '#f38ba8';
+            }
+        }
+
+        function copyCode() {
+            const code = document.getElementById('codeDisplay').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            });
+        }
+
+        // Initialize
+        renderEntities();
+        generateCode();
+    </script>
+</body>
+</html> 

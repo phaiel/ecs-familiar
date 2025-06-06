@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Familiar Memory Schema Visualizer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e, #2d1b69);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #f9e2af;
+            text-shadow: 0 0 10px rgba(249, 226, 175, 0.5);
+        }
+        
+        .schema-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .entity-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .entity-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .entity-card.moment { border-color: #f9e2af; }
+        .entity-card.thread { border-color: #a6e3a1; }
+        .entity-card.binding { border-color: #cba6f7; }
+        .entity-card.bond { border-color: #fab387; }
+        .entity-card.motif { border-color: #f38ba8; }
+        .entity-card.filament { border-color: #94e2d5; }
+        
+        .entity-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .entity-icon {
+            font-size: 1.5em;
+        }
+        
+        .field-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .field-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .field-name {
+            font-weight: 500;
+        }
+        
+        .field-type {
+            font-size: 0.9em;
+            opacity: 0.7;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .relationships {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .relationship {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        
+        .connection-arrow {
+            color: #fab387;
+        }
+        
+        .legend {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        .graphql-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #89b4fa;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        
+        .graphql-link:hover {
+            background: #74c0fc;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧵 Familiar Memory Schema</h1>
+        <p><strong>⚠️ STATIC OVERVIEW</strong> - This shows conceptual schema design</p>
+        <p>For live schema with full introspection: <a href="http://127.0.0.1:8000" style="color: #89b4fa;">📍 GraphiQL IDE</a></p>
+    </div>
+
+    <div class="legend">
+        <h3>Entity Types</h3>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #f9e2af;"></div>
+            <span>Moment</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #a6e3a1;"></div>
+            <span>Thread</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #cba6f7;"></div>
+            <span>Binding</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #fab387;"></div>
+            <span>Bond</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #f38ba8;"></div>
+            <span>Motif</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #94e2d5;"></div>
+            <span>Filament</span>
+        </div>
+    </div>
+
+    <div class="schema-container">
+        <!-- Moment Entity -->
+        <div class="entity-card moment">
+            <div class="entity-title">
+                <span class="entity-icon">✨</span>
+                <span>Moment</span>
+            </div>
+            <ul class="field-list">
+                <li class="field-item">
+                    <span class="field-name">text</span>
+                    <span class="field-type">String!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">thread_id</span>
+                    <span class="field-type">u32!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">timestamp</span>
+                    <span class="field-type">f64</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">emotional_charge</span>
+                    <span class="field-type">f32</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">sensory_details</span>
+                    <span class="field-type">Vec&lt;String&gt;</span>
+                </li>
+            </ul>
+            <div class="relationships">
+                <div class="relationship">
+                    <span>Belongs to</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Thread</span>
+                </div>
+                <div class="relationship">
+                    <span>Connected via</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Binding</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thread Entity -->
+        <div class="entity-card thread">
+            <div class="entity-title">
+                <span class="entity-icon">🧵</span>
+                <span>Thread</span>
+            </div>
+            <ul class="field-list">
+                <li class="field-item">
+                    <span class="field-name">name</span>
+                    <span class="field-type">String!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">thread_type</span>
+                    <span class="field-type">String!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">creation_time</span>
+                    <span class="field-type">f64</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">context_vector</span>
+                    <span class="field-type">Vec&lt;f32&gt;</span>
+                </li>
+            </ul>
+            <div class="relationships">
+                <div class="relationship">
+                    <span>Contains</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Moments</span>
+                </div>
+                <div class="relationship">
+                    <span>Connected via</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Bonds</span>
+                </div>
+                <div class="relationship">
+                    <span>Has</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Filaments</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Binding Entity -->
+        <div class="entity-card binding">
+            <div class="entity-title">
+                <span class="entity-icon">🔗</span>
+                <span>Binding</span>
+            </div>
+            <ul class="field-list">
+                <li class="field-item">
+                    <span class="field-name">moment_id</span>
+                    <span class="field-type">u32!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">thread_id</span>
+                    <span class="field-type">u32!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">binding_strength</span>
+                    <span class="field-type">f32</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">binding_type</span>
+                    <span class="field-type">String</span>
+                </li>
+            </ul>
+            <div class="relationships">
+                <div class="relationship">
+                    <span>Links</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Moment ↔ Thread</span>
+                </div>
+                <div class="relationship">
+                    <span>Creates</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Convergence Effects</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bond Entity -->
+        <div class="entity-card bond">
+            <div class="entity-title">
+                <span class="entity-icon">🔗</span>
+                <span>Bond</span>
+            </div>
+            <ul class="field-list">
+                <li class="field-item">
+                    <span class="field-name">thread1</span>
+                    <span class="field-type">String!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">thread2</span>
+                    <span class="field-type">String!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">affinity</span>
+                    <span class="field-type">f32!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">bond_strength</span>
+                    <span class="field-type">f32</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">component_context</span>
+                    <span class="field-type">Vec&lt;String&gt;</span>
+                </li>
+            </ul>
+            <div class="relationships">
+                <div class="relationship">
+                    <span>Connects</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Thread ↔ Thread</span>
+                </div>
+                <div class="relationship">
+                    <span>Influences</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Thread Convergence</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motif Entity -->
+        <div class="entity-card motif">
+            <div class="entity-title">
+                <span class="entity-icon">🎨</span>
+                <span>Motif</span>
+            </div>
+            <ul class="field-list">
+                <li class="field-item">
+                    <span class="field-name">pattern</span>
+                    <span class="field-type">String!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">strength</span>
+                    <span class="field-type">f32!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">emergence_conditions</span>
+                    <span class="field-type">Vec&lt;String&gt;</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">pattern_frequency</span>
+                    <span class="field-type">f32</span>
+                </li>
+            </ul>
+            <div class="relationships">
+                <div class="relationship">
+                    <span>Emerges from</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Multiple Moments</span>
+                </div>
+                <div class="relationship">
+                    <span>Influences</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Memory Formation</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filament Entity -->
+        <div class="entity-card filament">
+            <div class="entity-title">
+                <span class="entity-icon">🌱</span>
+                <span>Filament</span>
+            </div>
+            <ul class="field-list">
+                <li class="field-item">
+                    <span class="field-name">content</span>
+                    <span class="field-type">String!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">thread_name</span>
+                    <span class="field-type">String!</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">interpretation_weight</span>
+                    <span class="field-type">f32</span>
+                </li>
+                <li class="field-item">
+                    <span class="field-name">context_depth</span>
+                    <span class="field-type">u32</span>
+                </li>
+            </ul>
+            <div class="relationships">
+                <div class="relationship">
+                    <span>Interprets</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Thread Context</span>
+                </div>
+                <div class="relationship">
+                    <span>Provides</span>
+                    <span class="connection-arrow">→</span>
+                    <span>Meaning Layer</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="http://127.0.0.1:8000" class="graphql-link" target="_blank" id="graphqlLink">
+        🚀 Open Live GraphiQL Schema
+    </a>
+    
+    <div style="position: fixed; top: 80px; right: 20px; background: rgba(248, 184, 135, 0.9); color: #1e1e2e; padding: 15px; border-radius: 10px; max-width: 300px; font-size: 0.9em;">
+        <strong>📋 Static vs Live Schema:</strong><br>
+        • This page: Conceptual overview<br>
+        • <a href="http://127.0.0.1:8000" style="color: #1e1e2e; font-weight: bold;">GraphiQL</a>: Complete live schema with docs panel
+    </div>
+
+    <script>
+        // Add hover effects and animations
+        document.querySelectorAll('.entity-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-5px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+        
+        // Check if GraphQL server is running
+        async function checkGraphQLServer() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000');
+                if (response.ok) {
+                    document.querySelector('.graphql-link').style.background = '#a6e3a1';
+                    document.querySelector('.graphql-link').textContent = '✅ Live GraphiQL Ready';
+                    document.querySelector('.graphql-link').title = 'Click to access full schema with docs panel';
+                } else {
+                    throw new Error('Server not ready');
+                }
+            } catch (error) {
+                document.querySelector('.graphql-link').style.background = '#f38ba8';
+                document.querySelector('.graphql-link').textContent = '❌ Start App: ./test_visualization.sh';
+                document.querySelector('.graphql-link').title = 'GraphQL server not running';
+            }
+        }
+        
+        checkGraphQLServer();
+        setInterval(checkGraphQLServer, 3000);
+    </script>
+</body>
+</html> 

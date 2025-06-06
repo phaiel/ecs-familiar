@@ -1,0 +1,29 @@
+# Rust
+/target
+.rustc_info.json
+Cargo.lock
+
+# Python
+__pycache__/
+*.pyc
+.venv
+.env
+*.egg-info/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local config
+/hot_path/config/local.toml 
