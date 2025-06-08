@@ -1,0 +1,38 @@
+# cold/instances/dag.yml
+# System Execution DAG - Defines order and dependencies for 100% generated systems
+
+- name: temporal_drift
+  dependencies: []
+  execution_group: physics
+  parallel_safe: true
+  description: "Update temporal positions - no dependencies"
+
+- name: decay
+  dependencies: ["temporal_drift"]
+  execution_group: physics
+  parallel_safe: true
+  description: "Apply decay laws after temporal updates"
+
+- name: resonance
+  dependencies: ["decay"]
+  execution_group: physics
+  parallel_safe: false
+  description: "Apply resonance effects after decay calculations"
+
+- name: memory_consolidation
+  dependencies: ["decay", "resonance"]
+  execution_group: logic
+  parallel_safe: true
+  description: "Consolidate memory layers after physics"
+
+- name: entity_cleanup
+  dependencies: ["memory_consolidation"]
+  execution_group: cleanup
+  parallel_safe: false
+  description: "Clean up entities with zero strength"
+
+- name: stats_collection
+  dependencies: ["entity_cleanup"]
+  execution_group: cleanup
+  parallel_safe: true
+  description: "Collect system statistics" 

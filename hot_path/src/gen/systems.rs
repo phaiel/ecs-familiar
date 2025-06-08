@@ -44,6 +44,7 @@ impl LawSpecifications {
                 formula: "strength = min(strength * multiplier, max_strength) if strength > threshold else strength".to_string(),
                 applies_to: vec![
                     // Components that have "resonance" in their laws array  
+                    "DecayComponent".to_string(),
                     ],
                 threshold: 0.85,
                 multiplier: 1.2,
@@ -85,6 +86,14 @@ pub fn age_decay_system(world: &mut World, law_spec: &DecayLawSpec) {
 
 // Generate resonance systems for components that have "resonance" in their laws
 
+/// Resonance system for DecayComponent components  
+pub fn decaycomponent_resonance_system(world: &mut World, law_spec: &ResonanceLawSpec) {
+    for (_entity, component) in world.query_mut::<&mut DecayComponent>() {
+        // Apply resonance when strength is above threshold
+        // No strength field found - skip resonance for this component
+    }
+}
+
 /// Apply all physics laws as ECS systems
 pub fn apply_all_physics_laws(world: &mut World, law_specs: &LawSpecifications) {
     // Apply decay systems to all components that declare "decay" law
@@ -94,6 +103,8 @@ pub fn apply_all_physics_laws(world: &mut World, law_specs: &LawSpecifications) 
     age_decay_system(world, &law_specs.decay_law);
 
     // Apply resonance systems to all components that declare "resonance" law
+
+    decaycomponent_resonance_system(world, &law_specs.resonance_law);
 }
 
 /// Comprehensive system statistics

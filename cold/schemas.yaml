@@ -1,0 +1,195 @@
+# cold/schemas.yaml - Master Schema Definitions
+# Schema-first architecture following 100% Copier generation principles
+
+# Component Type Schema
+ComponentType:
+  type: object
+  required: [name, fields]
+  properties:
+    name:
+      type: string
+      description: Component type identifier
+    version:
+      type: integer
+      default: 1
+    mixins:
+      type: array
+      items: { type: string }
+      description: Reusable behavior patterns
+    laws:
+      type: array
+      items: { type: string }
+      description: Physics laws that affect this component
+    fields:
+      type: array
+      items:
+        type: object
+        required: [name, type]
+        properties:
+          name: { type: string }
+          type:
+            type: string
+            enum: [int, float, str, datetime, bool, vector, enum]
+          default_value: {}
+          constraints:
+            type: object
+            properties:
+              min: { type: number }
+              max: { type: number }
+              pattern: { type: string }
+
+# Physics Law Schema  
+LawType:
+  type: object
+  required: [name, formula, applies_to]
+  properties:
+    name:
+      type: string
+      description: Law identifier
+    version:
+      type: integer
+      default: 1
+    formula:
+      type: string
+      description: Mathematical formula for the law
+    applies_to:
+      type: array
+      items: { type: string }
+      description: Component types this law affects
+    constants:
+      type: object
+      description: Law-specific constants
+    constraints:
+      type: object
+      description: Value constraints and limits
+    execution_order:
+      type: integer
+      default: 100
+      description: Priority for DAG execution
+
+# Entity Blueprint Schema
+EntityBlueprint:
+  type: object
+  required: [name, components]
+  properties:
+    name:
+      type: string
+      description: Entity type identifier
+    version:
+      type: integer
+      default: 1
+    description:
+      type: string
+    components:
+      type: array
+      items:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string }
+          default_values:
+            type: object
+            description: Override component defaults
+    spawn_probability:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      default: 1.0
+
+# Command Schema
+CommandType:
+  type: object
+  required: [name, operation, target]
+  properties:
+    name:
+      type: string
+      description: Command identifier
+    version:
+      type: integer
+      default: 1
+    operation:
+      type: string
+      enum: [create, update, delete, query, mutate]
+    target:
+      type: string
+      description: Component or entity type
+    parameters:
+      type: array
+      items:
+        type: object
+        required: [name, type]
+        properties:
+          name: { type: string }
+          type: { type: string }
+          required: { type: boolean, default: true }
+    side_effects:
+      type: array
+      items: { type: string }
+      description: Other systems this command triggers
+
+# DAG Node Schema (System Execution Order)
+DAGNode:
+  type: object
+  required: [name, dependencies]
+  properties:
+    name:
+      type: string
+      description: System or law name
+    dependencies:
+      type: array
+      items: { type: string }
+      description: Systems that must run before this one
+    execution_group:
+      type: string
+      enum: [physics, logic, rendering, cleanup]
+      default: physics
+    parallel_safe:
+      type: boolean
+      default: false
+      description: Can run in parallel with other systems
+
+# Type Definition Schema
+TypeDefinition:
+  type: object
+  required: [name, kind]
+  properties:
+    name:
+      type: string
+      description: Type identifier
+    version:
+      type: integer
+      default: 1
+    kind:
+      type: string
+      enum: [enum, struct, alias]
+    values:
+      type: array
+      items: { type: string }
+      description: For enum types
+    fields:
+      type: array
+      description: For struct types
+    alias_of:
+      type: string
+      description: For alias types
+
+# Configuration Schema
+ConfigurationSet:
+  type: object
+  required: [name, constants]
+  properties:
+    name:
+      type: string
+      description: Configuration set identifier
+    version:
+      type: integer
+      default: 1
+    constants:
+      type: object
+      description: Named constants and their values
+    thresholds:
+      type: object
+      description: System thresholds and limits
+    rates:
+      type: object
+      description: Update rates and frequencies 

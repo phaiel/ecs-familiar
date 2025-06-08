@@ -1,0 +1,94 @@
+// GENERATED CODE — DO NOT EDIT
+// Generated via Copier from cold path YAML command schemas
+use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use crate::gen::components::*;
+
+{% for cmd in commands -%}
+/// {{ cmd.name }} v{{ cmd.version }} - {{ cmd.operation }} operation on {{ cmd.target }}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct {{ cmd.name }} {
+    {%- for param in cmd.parameters %}
+    {%- if param.required %}
+    pub {{ param.name }}: {{ param.type | rust_typemap }},
+    {%- else %}
+    pub {{ param.name }}: Option<{{ param.type | rust_typemap }}>,
+    {%- endif %}
+    {%- endfor %}
+}
+
+impl {{ cmd.name }} {
+    pub const VERSION: u32 = {{ cmd.version }};
+    pub const OPERATION: &'static str = "{{ cmd.operation }}";
+    pub const TARGET: &'static str = "{{ cmd.target }}";
+    
+    {%- if cmd.side_effects %}
+    pub const SIDE_EFFECTS: &'static [&'static str] = &[
+        {%- for effect in cmd.side_effects %}
+        "{{ effect }}",
+        {%- endfor %}
+    ];
+    {%- else %}
+    pub const SIDE_EFFECTS: &'static [&'static str] = &[];
+    {%- endif %}
+    
+    pub fn new(
+        {%- for param in cmd.parameters %}
+        {%- if param.required %}
+        {{ param.name }}: {{ param.type | rust_typemap }},
+        {%- else %}
+        {{ param.name }}: Option<{{ param.type | rust_typemap }}>,
+        {%- endif %}
+        {%- endfor %}
+    ) -> Self {
+        Self {
+            {%- for param in cmd.parameters %}
+            {{ param.name }},
+            {%- endfor %}
+        }
+    }
+}
+
+{% endfor -%}
+
+/// Command registry for runtime introspection
+pub struct CommandRegistry;
+
+impl CommandRegistry {
+    pub fn get_all_commands() -> Vec<(String, u32)> {
+        vec![
+            {%- for cmd in commands %}
+            ("{{ cmd.name }}".to_string(), {{ cmd.version }}),
+            {%- endfor %}
+        ]
+    }
+    
+    pub fn get_commands_by_operation(operation: &str) -> Vec<String> {
+        let mut commands = Vec::new();
+        {%- for cmd in commands %}
+        if "{{ cmd.operation }}" == operation {
+            commands.push("{{ cmd.name }}".to_string());
+        }
+        {%- endfor %}
+        commands
+    }
+    
+    pub fn get_commands_by_target(target: &str) -> Vec<String> {
+        let mut commands = Vec::new();
+        {%- for cmd in commands %}
+        if "{{ cmd.target }}" == target {
+            commands.push("{{ cmd.name }}".to_string());
+        }
+        {%- endfor %}
+        commands
+    }
+    
+    pub fn get_side_effects(command_name: &str) -> &'static [&'static str] {
+        match command_name {
+            {%- for cmd in commands %}
+            "{{ cmd.name }}" => {{ cmd.name }}::SIDE_EFFECTS,
+            {%- endfor %}
+            _ => &[],
+        }
+    }
+} 

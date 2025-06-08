@@ -1,0 +1,106 @@
+# cold/instances/commands.yml
+# Command Types - 100% generated ECS operations
+
+- name: CreateMemory
+  version: 1
+  operation: create
+  target: Memory
+  parameters:
+    - name: content
+      type: str
+      required: true
+    - name: strength
+      type: float
+      required: false
+    - name: thread_id
+      type: str
+      required: false
+  side_effects: ["decay", "temporal_drift"]
+
+- name: CreateThread
+  version: 1
+  operation: create
+  target: Thread
+  parameters:
+    - name: name
+      type: str
+      required: true
+    - name: thread_type
+      type: str
+      required: true
+  side_effects: []
+
+- name: UpdateStrength
+  version: 1
+  operation: update
+  target: DecayComponent
+  parameters:
+    - name: entity_id
+      type: str
+      required: true
+    - name: new_strength
+      type: float
+      required: true
+  side_effects: ["resonance"]
+
+- name: ConsolidateMemory
+  version: 1
+  operation: mutate
+  target: MemoryLayer
+  parameters:
+    - name: layer_id
+      type: str
+      required: true
+    - name: force_consolidation
+      type: bool
+      required: false
+  side_effects: ["memory_consolidation"]
+
+- name: QueryByStrength
+  version: 1
+  operation: query
+  target: DecayComponent
+  parameters:
+    - name: min_strength
+      type: float
+      required: true
+    - name: max_results
+      type: int
+      required: false
+  side_effects: []
+
+- name: DeleteWeakEntities
+  version: 1
+  operation: delete
+  target: DecayComponent
+  parameters:
+    - name: threshold
+      type: float
+      required: true
+  side_effects: ["entity_cleanup"]
+
+- name: UpdateMood
+  version: 1
+  operation: update
+  target: Mood
+  parameters:
+    - name: entity_id
+      type: str
+      required: true
+    - name: mood_state
+      type: str
+      required: true
+    - name: intensity
+      type: float
+      required: false
+  side_effects: []
+
+- name: AgeEntities
+  version: 1
+  operation: mutate
+  target: Age
+  parameters:
+    - name: days_to_add
+      type: int
+      required: true
+  side_effects: ["decay"] 

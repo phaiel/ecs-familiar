@@ -150,6 +150,17 @@ impl ComponentRegistry {
         if "decay" == law_name {
             components.push("DecayComponent");
         }
+        if "resonance" == law_name {
+            components.push("DecayComponent");
+        }
+
+        if "temporal_drift" == law_name {
+            components.push("TemporalPosition");
+        }
+
+        if "memory_consolidation" == law_name {
+            components.push("MemoryLayer");
+        }
 
         if "decay" == law_name {
             components.push("Age");

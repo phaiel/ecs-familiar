@@ -1,0 +1,130 @@
+// GENERATED CODE — DO NOT EDIT
+// Generated via Copier from cold path YAML configuration schemas
+
+{% for config in configurations -%}
+/// {{ config.name }} v{{ config.version }} - Configuration constants
+pub struct {{ config.name }};
+
+impl {{ config.name }} {
+    pub const VERSION: u32 = {{ config.version }};
+    
+    // Constants
+    {%- for name, value in config.constants %}
+    pub const {{ name }}: {{ value | rust_type_for_value }} = {{ value | rust_default }};
+    {%- endfor %}
+    
+    // Thresholds
+    {%- for name, value in config.thresholds %}
+    pub const {{ name }}: {{ value | rust_type_for_value }} = {{ value | rust_default }};
+    {%- endfor %}
+    
+    // Rates
+    {%- for name, value in config.rates %}
+    pub const {{ name }}: {{ value | rust_type_for_value }} = {{ value | rust_default }};
+    {%- endfor %}
+}
+
+{% endfor -%}
+
+/// Master configuration registry
+pub struct ConfigurationRegistry;
+
+impl ConfigurationRegistry {
+    pub fn get_all_configs() -> Vec<(String, u32)> {
+        vec![
+            {%- for config in configurations %}
+            ("{{ config.name }}".to_string(), {{ config.version }}),
+            {%- endfor %}
+        ]
+    }
+    
+    /// Get configuration value by name (returns Option<f64> for numeric values)
+    pub fn get_constant(config_name: &str, constant_name: &str) -> Option<f64> {
+        match (config_name, constant_name) {
+            {%- for config in configurations %}
+            {%- for name, value in config.constants %}
+            ("{{ config.name }}", "{{ name }}") => Some({{ value }}.into()),
+            {%- endfor %}
+            {%- endfor %}
+            _ => None,
+        }
+    }
+    
+    /// Get threshold value by name
+    pub fn get_threshold(config_name: &str, threshold_name: &str) -> Option<f64> {
+        match (config_name, threshold_name) {
+            {%- for config in configurations %}
+            {%- for name, value in config.thresholds %}
+            ("{{ config.name }}", "{{ name }}") => Some({{ value }}.into()),
+            {%- endfor %}
+            {%- endfor %}
+            _ => None,
+        }
+    }
+    
+    /// Get rate value by name  
+    pub fn get_rate(config_name: &str, rate_name: &str) -> Option<f64> {
+        match (config_name, rate_name) {
+            {%- for config in configurations %}
+            {%- for name, value in config.rates %}
+            ("{{ config.name }}", "{{ name }}") => Some({{ value }}.into()),
+            {%- endfor %}
+            {%- endfor %}
+            _ => None,
+        }
+    }
+}
+
+/// Physics constants aggregated from all configurations
+pub struct PhysicsConstants;
+
+impl PhysicsConstants {
+    // Decay-related constants
+    {%- for config in configurations %}
+    {%- if config.name == "DecayConstants" %}
+    {%- for name, value in config.constants %}
+    pub const {{ name }}: {{ value | rust_type_for_value }} = {{ value | rust_default }};
+    {%- endfor %}
+    {%- endif %}
+    {%- endfor %}
+    
+    // Memory-related constants  
+    {%- for config in configurations %}
+    {%- if config.name == "MemoryConstants" %}
+    {%- for name, value in config.constants %}
+    pub const {{ name }}: {{ value | rust_type_for_value }} = {{ value | rust_default }};
+    {%- endfor %}
+    {%- endif %}
+    {%- endfor %}
+    
+    // Temporal constants
+    {%- for config in configurations %}
+    {%- if config.name == "TemporalConstants" %}
+    {%- for name, value in config.constants %}
+    pub const {{ name }}: {{ value | rust_type_for_value }} = {{ value | rust_default }};
+    {%- endfor %}
+    {%- endif %}
+    {%- endfor %}
+}
+
+/// System thresholds aggregated from all configurations
+pub struct SystemThresholds;
+
+impl SystemThresholds {
+    {%- for config in configurations %}
+    {%- for name, value in config.thresholds %}
+    pub const {{ name }}: {{ value | rust_type_for_value }} = {{ value | rust_default }};
+    {%- endfor %}
+    {%- endfor %}
+}
+
+/// Update rates aggregated from all configurations
+pub struct UpdateRates;
+
+impl UpdateRates {
+    {%- for config in configurations %}
+    {%- for name, value in config.rates %}
+    pub const {{ name }}: {{ value | rust_type_for_value }} = {{ value | rust_default }};
+    {%- endfor %}
+    {%- endfor %}
+} 

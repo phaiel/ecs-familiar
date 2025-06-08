@@ -1,0 +1,53 @@
+# cold/instances/laws.yml
+# Physics Laws that apply to components
+
+- name: decay
+  version: 1
+  formula: "strength = strength * pow(0.5, time_elapsed / half_life)"
+  applies_to:
+    - DecayComponent
+    - Age
+  constants:
+    min_strength: 0.1
+    max_decay_rate: 0.99
+    default_half_life: 300.0
+  constraints:
+    strength:
+      min: 0.0
+      max: 1.0
+  execution_order: 10
+
+- name: resonance
+  version: 1
+  formula: "strength = min(strength * multiplier, max_strength) if strength > threshold else strength"
+  applies_to:
+    - DecayComponent
+  constants:
+    threshold: 0.85
+    multiplier: 1.2
+    max_strength: 1.0
+  constraints:
+    strength:
+      min: 0.0
+      max: 1.0
+  execution_order: 20
+
+- name: temporal_drift
+  version: 1
+  formula: "timestamp = timestamp + drift_rate * time_delta"
+  applies_to:
+    - TemporalPosition
+  constants:
+    drift_rate: 0.001
+    max_drift: 10.0
+  execution_order: 5
+
+- name: memory_consolidation
+  version: 1
+  formula: "access_frequency = access_frequency * consolidation_rate"
+  applies_to:
+    - MemoryLayer
+  constants:
+    consolidation_rate: 0.95
+    min_frequency: 0.01
+  execution_order: 30 

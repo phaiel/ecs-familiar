@@ -1,4 +1,5 @@
 # cold/instances/component_types.yml
+# Components connected to laws, DAGs, entities, and types
 
 # Memory System Components
 - name: EntityType
@@ -20,45 +21,50 @@
 - name: DecayComponent
   version: 1
   mixins: ["decayable"]
-  laws: ["decay"]
+  laws: ["decay", "resonance"]
   fields:
     - name: strength
       type: float
-      default: 1.0
+      default_value: 1.0
     - name: half_life
       type: float
-      default: 300.0
+      default_value: 300.0
     - name: last_update
       type: float
+      default_value: 0.0
 
 - name: TemporalPosition
   version: 1
   mixins: []
-  laws: []
+  laws: ["temporal_drift"]
   fields:
     - name: timestamp
       type: datetime
     - name: precision
-      type: str
+      type: enum
+      default_value: "day"
     - name: temporal_coordinates
       type: vector
     - name: time_zone_offset
       type: int
+      default_value: 0
 
 - name: MemoryLayer
   version: 1
   mixins: []
-  laws: []
+  laws: ["memory_consolidation"]
   fields:
     - name: layer_type
       type: enum
+      default_value: "working"
     - name: access_frequency
       type: float
-      default: 0.0
+      default_value: 0.0
     - name: last_accessed
       type: datetime
     - name: consolidation_status
       type: enum
+      default_value: "active"
     - name: redis_key
       type: str
 
@@ -70,7 +76,7 @@
   fields:
     - name: age_days
       type: int
-      default: 0
+      default_value: 0
     - name: created_at
       type: datetime
 
@@ -81,9 +87,10 @@
   fields:
     - name: mood_state
       type: enum
+      default_value: "neutral"
     - name: intensity
       type: float
-      default: 0.0
+      default_value: 0.0
 
 # Thread System Components
 - name: ThreadType

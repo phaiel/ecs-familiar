@@ -73,11 +73,32 @@ def load_yaml(file_path: str) -> list:
         return yaml.safe_load(f)
 
 
+def rust_type_for_value(value):
+    """Determine Rust type for a given value."""
+    if isinstance(value, str):
+        return "String"
+    elif isinstance(value, bool):
+        return "bool"
+    elif isinstance(value, int):
+        return "i32"
+    elif isinstance(value, float):
+        return "f64"
+    else:
+        return "String"
+
+
+def title_filter(text):
+    """Convert text to title case for Rust struct names."""
+    return ''.join(word.capitalize() for word in text.split('_'))
+
+
 # Register filters for Copier
 def setup_jinja_filters(jinja_env):
     """Register custom filters with Jinja environment."""
     jinja_env.filters['rust_typemap'] = rust_typemap
     jinja_env.filters['rust_default'] = rust_default
+    jinja_env.filters['rust_type_for_value'] = rust_type_for_value
+    jinja_env.filters['title'] = title_filter
     jinja_env.globals['load_yaml'] = load_yaml
 
 

@@ -1,0 +1,65 @@
+# cold/instances/configuration.yml
+# Configuration Constants - 100% generated law constants and system config
+
+- name: DecayConstants
+  version: 1
+  constants:
+    MIN_STRENGTH: 0.1
+    MAX_STRENGTH: 1.0
+    DEFAULT_HALF_LIFE: 300.0
+    DECAY_EPSILON: 0.001
+  thresholds:
+    CLEANUP_THRESHOLD: 0.05
+    RESONANCE_TRIGGER: 0.85
+  rates:
+    UPDATE_FREQUENCY_HZ: 60.0
+    CONSOLIDATION_INTERVAL_SEC: 30.0
+
+- name: MemoryConstants
+  version: 1
+  constants:
+    MAX_WORKING_MEMORY_SIZE: 1000
+    CONSOLIDATION_BATCH_SIZE: 50
+    DEFAULT_ACCESS_FREQUENCY: 1.0
+  thresholds:
+    LOW_ACCESS_THRESHOLD: 0.1
+    HIGH_ACCESS_THRESHOLD: 10.0
+  rates:
+    MEMORY_SCAN_INTERVAL_SEC: 5.0
+    CLEANUP_INTERVAL_SEC: 300.0
+
+- name: PhysicsConstants
+  version: 1
+  constants:
+    TIME_STEP_MS: 16.67  # 60 FPS
+    MAX_DELTA_TIME_SEC: 0.1
+    GRAVITATIONAL_CONSTANT: 6.674e-11
+  thresholds:
+    MAX_VELOCITY: 1000.0
+    MIN_ENTITY_DISTANCE: 0.1
+  rates:
+    PHYSICS_UPDATE_HZ: 60.0
+
+- name: SystemConstants
+  version: 1
+  constants:
+    MAX_ENTITIES: 10000
+    COMPONENT_POOL_SIZE: 5000
+    MAX_SYSTEMS: 32
+  thresholds:
+    MEMORY_WARNING_MB: 500
+    CPU_WARNING_PERCENT: 80.0
+  rates:
+    STATS_COLLECTION_HZ: 1.0
+    HEALTH_CHECK_HZ: 0.1
+
+- name: TemporalConstants
+  version: 1
+  constants:
+    DRIFT_RATE: 0.001
+    MAX_TIME_DRIFT_SEC: 10.0
+    PRECISION_LEVELS: ["second", "minute", "hour", "day", "year"]
+  thresholds:
+    TIME_SYNC_THRESHOLD_MS: 100
+  rates:
+    TIME_UPDATE_HZ: 10.0 

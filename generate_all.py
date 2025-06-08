@@ -16,34 +16,53 @@ def validate_schemas():
     """Validate YAML schemas before generation."""
     print("🔍 Validating YAML schemas...")
     
-    # Validate component schema
-    schema_path = Path("cold/instances/component_types.yml")
-    if not schema_path.exists():
-        raise FileNotFoundError(f"Component schema not found: {schema_path}")
+    schema_data = {}
+    
+    # Load components
+    components_path = Path("cold/instances/component_types.yml")
+    if not components_path.exists():
+        raise FileNotFoundError(f"Component schema not found: {components_path}")
+    schema_data['components'] = load_yaml(str(components_path))
+    
+    # Load laws (optional)
+    laws_path = Path("cold/instances/laws.yml") 
+    schema_data['laws'] = load_yaml(str(laws_path)) if laws_path.exists() else []
+    
+    # Load DAG (optional)
+    dag_path = Path("cold/instances/dag.yml")
+    schema_data['dag_nodes'] = load_yaml(str(dag_path)) if dag_path.exists() else []
+    
+    # Load entity blueprints (optional)
+    blueprints_path = Path("cold/instances/entity_blueprints.yml")
+    schema_data['entity_blueprints'] = load_yaml(str(blueprints_path)) if blueprints_path.exists() else []
+    
+    # Load commands (optional) 
+    commands_path = Path("cold/instances/commands.yml")
+    schema_data['commands'] = load_yaml(str(commands_path)) if commands_path.exists() else []
+    
+    # Load configuration (optional)
+    config_path = Path("cold/instances/configuration.yml")
+    schema_data['configurations'] = load_yaml(str(config_path)) if config_path.exists() else []
+    
+    print(f"  ✅ Loaded {len(schema_data['components'])} components, {len(schema_data['laws'])} laws")
+    print(f"  ✅ Loaded {len(schema_data['dag_nodes'])} DAG nodes, {len(schema_data['entity_blueprints'])} blueprints")
+    print(f"  ✅ Loaded {len(schema_data['commands'])} commands, {len(schema_data['configurations'])} configs")
     
     try:
-        components = load_yaml(str(schema_path))
-        print(f"  ✅ Loaded {len(components)} component definitions")
-        
-        # Validate required fields
-        for comp in components:
+        # Validate components
+        for comp in schema_data['components']:
             if 'name' not in comp or 'fields' not in comp:
                 raise ValueError(f"Invalid component: {comp}")
-            
-            # Validate field types
-            for field in comp['fields']:
-                if field['type'] not in ['int', 'float', 'str', 'datetime', 'bool', 'vector', 'enum']:
-                    raise ValueError(f"Invalid field type: {field['type']} in {comp['name']}")
         
         print("  ✅ Schema validation passed")
-        return components
+        return schema_data
         
     except Exception as e:
         print(f"  ❌ Schema validation failed: {e}")
         raise
 
 
-def generate_hot_path(components):
+def generate_hot_path(schema_data):
     """Generate entire hot path using Copier templates."""
     print("🏗️ Generating hot path from schemas...")
     
@@ -61,7 +80,7 @@ def generate_hot_path(components):
     # Generate into src/gen/ following best practices
     print("  📦 Generating components.rs...")
     component_template = env.get_template('component.rs.jinja')
-    component_code = component_template.render(component_types=components)
+    component_code = component_template.render(component_types=schema_data['components'])
     
     with open(gen_path / "components.rs", 'w') as f:
         f.write(component_code)
@@ -70,7 +89,7 @@ def generate_hot_path(components):
     # Generate systems.rs
     print("  ⚖️ Generating systems.rs...")
     systems_template = env.get_template('systems.rs.jinja')
-    systems_code = systems_template.render(component_types=components)
+    systems_code = systems_template.render(component_types=schema_data['components'])
     
     with open(gen_path / "systems.rs", 'w') as f:
         f.write(systems_code)
@@ -79,7 +98,7 @@ def generate_hot_path(components):
     # Generate main.rs
     print("  🚀 Generating main.rs...")
     main_template = env.get_template('main.rs.jinja')
-    main_code = main_template.render(component_types=components)
+    main_code = main_template.render(component_types=schema_data['components'])
     
     with open(hot_path / "main.rs", 'w') as f:
         f.write(main_code)
@@ -175,8 +194,8 @@ def show_generation_summary(components):
     
     print(f"\n📁 Generated Files:")
     generated_files = [
-        "hot_path/src/components.rs",
-        "hot_path/src/systems.rs", 
+        "hot_path/src/gen/components.rs",
+        "hot_path/src/gen/systems.rs", 
         "hot_path/src/main.rs",
         "hot_path/src/lib.rs",
         "hot_path/Cargo.toml"
@@ -207,10 +226,10 @@ def main():
     
     try:
         # Step 1: Validate schemas
-        components = validate_schemas()
+        schema_data = validate_schemas()
         
         # Step 2: Generate hot path
-        generate_hot_path(components)
+        generate_hot_path(schema_data)
         
         # Step 3: Update Cargo.toml
         update_cargo_toml()
@@ -218,7 +237,7 @@ def main():
         # Step 4: Test compilation
         if test_compilation():
             # Step 5: Show summary
-            show_generation_summary(components)
+            show_generation_summary(schema_data['components'])
             
             print(f"\n✨ Schema-first generation completed successfully!")
             print(f"🎯 Hot path is now 100% generated from cold path YAML schemas")

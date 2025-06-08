@@ -130,27 +130,36 @@ def load_component_schema(yaml_path: str = "cold/instances/component_types.yml")
     # Validate and parse components
     components = [ComponentType(**comp_data) for comp_data in raw_data]
     
-    # Load default laws
-    default_laws = [
-        LawSpecification(
-            name="decay",
-            formula="strength = strength * pow(0.5, time_elapsed / half_life)",
-            variables=["strength", "half_life", "last_update"],
-            constants={},
-            constraints={"strength": {"min": 0.1}},
-            applies_to=["DecayComponent", "Age"]
-        ),
-        LawSpecification(
-            name="resonance",
-            formula="strength = min(strength * multiplier, max_strength) if strength > threshold else strength",
-            variables=["strength"],
-            constants={"threshold": 0.85, "multiplier": 1.2, "max_strength": 1.0},
-            constraints={},
-            applies_to=["DecayComponent"]
-        )
-    ]
+    # Load laws from YAML file
+    laws_path = Path("cold/instances/laws.yml")
+    laws = []
+    if laws_path.exists():
+        with open(laws_path, 'r') as f:
+            laws_data = yaml.safe_load(f) or []
+        
+        for law_data in laws_data:
+            laws.append(LawSpecification(
+                name=law_data["name"],
+                formula=law_data["formula"],
+                variables=[],  # Can be extracted from formula later
+                constants=law_data.get("constants", {}),
+                constraints=law_data.get("constraints", {}),
+                applies_to=law_data["applies_to"]
+            ))
+    else:
+        # Fallback to default laws if file doesn't exist
+        laws = [
+            LawSpecification(
+                name="decay",
+                formula="strength = strength * pow(0.5, time_elapsed / half_life)",
+                variables=["strength", "half_life", "last_update"],
+                constants={},
+                constraints={"strength": {"min": 0.1}},
+                applies_to=["DecayComponent", "Age"]
+            )
+        ]
     
-    registry = ComponentRegistry(components=components, laws=default_laws)
+    registry = ComponentRegistry(components=components, laws=laws)
     
     # Validate consistency
     errors = registry.validate_law_consistency()

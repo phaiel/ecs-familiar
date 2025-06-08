@@ -1,0 +1,95 @@
+# cold/instances/entity_blueprints.yml
+# Entity Blueprints - Component compositions for 100% generated entity types
+
+- name: Memory
+  version: 1
+  description: "A memory entity with decay and temporal positioning"
+  components:
+    - type: EntityType
+      default_values:
+        entity_type: "memory"
+    - type: DisplayText
+      default_values:
+        content: "A vivid memory"
+    - type: DecayComponent
+      default_values:
+        strength: 0.8
+        half_life: 600.0
+    - type: TemporalPosition
+      default_values:
+        precision: "day"
+        time_zone_offset: 0
+  spawn_probability: 0.7
+
+- name: Thread
+  version: 1
+  description: "A thread entity for organizing memories"
+  components:
+    - type: EntityType
+      default_values:
+        entity_type: "thread"
+    - type: DisplayText
+      default_values:
+        content: "Memory thread"
+    - type: ThreadType
+      default_values:
+        thread_type: "person"
+    - type: ThreadName
+      default_values:
+        name: "Default Thread"
+    - type: ThreadId
+  spawn_probability: 0.3
+
+- name: Moment
+  version: 1
+  description: "A specific moment within a thread"
+  components:
+    - type: EntityType
+      default_values:
+        entity_type: "moment"
+    - type: DisplayText
+      default_values:
+        content: "A significant moment"
+    - type: DecayComponent
+      default_values:
+        strength: 0.9
+        half_life: 800.0
+    - type: ThreadId
+  spawn_probability: 0.8
+
+- name: AgedEntity
+  version: 1
+  description: "An entity that ages over time"
+  components:
+    - type: EntityType
+      default_values:
+        entity_type: "aged_entity"
+    - type: DisplayText
+      default_values:
+        content: "Aging entity"
+    - type: Age
+      default_values:
+        age_days: 0
+    - type: Mood
+      default_values:
+        mood_state: "neutral"
+        intensity: 0.5
+  spawn_probability: 0.4
+
+- name: MemoryLayer
+  version: 1
+  description: "A memory layer for consolidation"
+  components:
+    - type: EntityType
+      default_values:
+        entity_type: "memory_layer"
+    - type: DisplayText
+      default_values:
+        content: "Memory layer"
+    - type: MemoryLayer
+      default_values:
+        layer_type: "working"
+        access_frequency: 1.0
+        consolidation_status: "active"
+        redis_key: "layer_default"
+  spawn_probability: 0.2 

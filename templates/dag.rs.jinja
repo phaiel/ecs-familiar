@@ -1,0 +1,169 @@
+// GENERATED CODE — DO NOT EDIT  
+// Generated via Copier from cold path YAML DAG schemas
+use std::collections::{HashMap, HashSet};
+use std::cmp::Ordering;
+
+{% for node in dag_nodes -%}
+/// DAG node for {{ node.name }} system
+#[derive(Debug, Clone)]
+pub struct {{ node.name | title }}Node {
+    pub name: &'static str,
+    pub dependencies: &'static [&'static str], 
+    pub execution_group: ExecutionGroup,
+    pub parallel_safe: bool,
+}
+
+impl {{ node.name | title }}Node {
+    pub const INSTANCE: Self = Self {
+        name: "{{ node.name }}",
+        dependencies: &[
+            {%- for dep in node.dependencies %}
+            "{{ dep }}",
+            {%- endfor %}
+        ],
+        execution_group: ExecutionGroup::{{ node.execution_group | title }},
+        parallel_safe: {{ node.parallel_safe | lower }},
+    };
+}
+
+{% endfor -%}
+
+/// Execution groups for system organization
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ExecutionGroup {
+    Physics,
+    Logic, 
+    Rendering,
+    Cleanup,
+}
+
+impl ExecutionGroup {
+    pub fn priority(&self) -> u32 {
+        match self {
+            ExecutionGroup::Physics => 10,
+            ExecutionGroup::Logic => 20,
+            ExecutionGroup::Rendering => 30,
+            ExecutionGroup::Cleanup => 40,
+        }
+    }
+}
+
+/// DAG node trait for system execution
+pub trait DAGNode {
+    fn name(&self) -> &'static str;
+    fn dependencies(&self) -> &'static [&'static str];
+    fn execution_group(&self) -> ExecutionGroup;
+    fn parallel_safe(&self) -> bool;
+}
+
+{% for node in dag_nodes -%}
+impl DAGNode for {{ node.name | title }}Node {
+    fn name(&self) -> &'static str { "{{ node.name }}" }
+    fn dependencies(&self) -> &'static [&'static str] { 
+        &[
+            {%- for dep in node.dependencies %}
+            "{{ dep }}",
+            {%- endfor %}
+        ]
+    }
+    fn execution_group(&self) -> ExecutionGroup { ExecutionGroup::{{ node.execution_group | title }} }
+    fn parallel_safe(&self) -> bool { {{ node.parallel_safe | lower }} }
+}
+
+{% endfor -%}
+
+/// System execution scheduler based on DAG
+pub struct SystemScheduler {
+    execution_order: Vec<&'static str>,
+    parallel_groups: HashMap<ExecutionGroup, Vec<&'static str>>,
+}
+
+impl SystemScheduler {
+    pub fn from_schema() -> Self {
+        let nodes: Vec<Box<dyn DAGNode>> = vec![
+            {%- for node in dag_nodes %}
+            Box::new({{ node.name | title }}Node::INSTANCE),
+            {%- endfor %}
+        ];
+        
+        let execution_order = Self::topological_sort(&nodes);
+        let parallel_groups = Self::group_by_execution_group(&nodes);
+        
+        Self {
+            execution_order,
+            parallel_groups,
+        }
+    }
+    
+    fn topological_sort(nodes: &[Box<dyn DAGNode>]) -> Vec<&'static str> {
+        let mut result = Vec::new();
+        let mut visited = HashSet::new();
+        let mut visiting = HashSet::new();
+        
+        fn visit(
+            node_name: &str,
+            nodes: &[Box<dyn DAGNode>],
+            visited: &mut HashSet<String>,
+            visiting: &mut HashSet<String>,
+            result: &mut Vec<&'static str>,
+        ) -> Result<(), String> {
+            if visiting.contains(node_name) {
+                return Err(format!("Circular dependency detected: {}", node_name));
+            }
+            if visited.contains(node_name) {
+                return Ok(());
+            }
+            
+            visiting.insert(node_name.to_string());
+            
+            if let Some(node) = nodes.iter().find(|n| n.name() == node_name) {
+                for dep in node.dependencies() {
+                    visit(dep, nodes, visited, visiting, result)?;
+                }
+                result.push(node.name());
+            }
+            
+            visiting.remove(node_name);
+            visited.insert(node_name.to_string());
+            Ok(())
+        }
+        
+        for node in nodes {
+            if let Err(e) = visit(node.name(), nodes, &mut visited, &mut visiting, &mut result) {
+                eprintln!("DAG error: {}", e);
+            }
+        }
+        
+        result
+    }
+    
+    fn group_by_execution_group(nodes: &[Box<dyn DAGNode>]) -> HashMap<ExecutionGroup, Vec<&'static str>> {
+        let mut groups = HashMap::new();
+        
+        for node in nodes {
+            groups
+                .entry(node.execution_group())
+                .or_insert_with(Vec::new)
+                .push(node.name());
+        }
+        
+        groups
+    }
+    
+    pub fn get_execution_order(&self) -> &[&'static str] {
+        &self.execution_order
+    }
+    
+    pub fn get_parallel_group(&self, group: ExecutionGroup) -> Option<&[&'static str]> {
+        self.parallel_groups.get(&group).map(|v| v.as_slice())
+    }
+    
+    pub fn can_run_parallel(&self, system_name: &str) -> bool {
+        {%- for node in dag_nodes %}
+        if system_name == "{{ node.name }}" {
+            return {{ node.parallel_safe | lower }};
+        }
+        {%- endfor %}
+        false
+    }
+} 

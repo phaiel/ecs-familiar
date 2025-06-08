@@ -52,8 +52,8 @@ impl EcsMemorySystem {
         // Create DecayComponent entity
         let decaycomponent_entity = world.spawn((DecayComponent {
             strength: 1.0,
-            half_life: 1.0,
-            last_update: 1.0,
+            half_life: 300.0,
+            last_update: 0.0,
         },));
         println!(
             "  ✅ Created DecayComponent entity: {:?}",
@@ -63,7 +63,7 @@ impl EcsMemorySystem {
         // Create TemporalPosition entity
         let temporalposition_entity = world.spawn((TemporalPosition {
             timestamp: chrono::Utc::now(),
-            precision: "temporalposition_precision".to_string(),
+            precision: "day".to_string(),
             temporal_coordinates: Vec::new(),
             time_zone_offset: 0,
         },));
@@ -74,10 +74,10 @@ impl EcsMemorySystem {
 
         // Create MemoryLayer entity
         let memorylayer_entity = world.spawn((MemoryLayer {
-            layer_type: "default".to_string(),
-            access_frequency: 1.0,
+            layer_type: "working".to_string(),
+            access_frequency: 0.0,
             last_accessed: chrono::Utc::now(),
-            consolidation_status: "default".to_string(),
+            consolidation_status: "active".to_string(),
             redis_key: "memorylayer_redis_key".to_string(),
         },));
         println!("  ✅ Created MemoryLayer entity: {:?}", memorylayer_entity);
@@ -91,8 +91,8 @@ impl EcsMemorySystem {
 
         // Create Mood entity
         let mood_entity = world.spawn((Mood {
-            mood_state: "default".to_string(),
-            intensity: 1.0,
+            mood_state: "neutral".to_string(),
+            intensity: 0.0,
         },));
         println!("  ✅ Created Mood entity: {:?}", mood_entity);
 
@@ -200,7 +200,7 @@ impl EcsMemorySystem {
             );
         }
         if let Some(count) = entity_counts.get("TemporalPosition") {
-            let icon = "📦";
+            let icon = "⚖️";
             println!(
                 "{} TemporalPosition: {}",
                 icon,
@@ -208,7 +208,7 @@ impl EcsMemorySystem {
             );
         }
         if let Some(count) = entity_counts.get("MemoryLayer") {
-            let icon = "📦";
+            let icon = "⚖️";
             println!(
                 "{} MemoryLayer: {}",
                 icon,
@@ -244,7 +244,11 @@ impl EcsMemorySystem {
 
         // Show law applications from schema
 
-        println!("  📋 DecayComponent affected by: decay");
+        println!("  📋 DecayComponent affected by: decay, resonance");
+
+        println!("  📋 TemporalPosition affected by: temporal_drift");
+
+        println!("  📋 MemoryLayer affected by: memory_consolidation");
 
         println!("  📋 Age affected by: decay");
 
@@ -368,35 +372,37 @@ fn schema_test_mode() {
     println!("\n📋 Testing DecayComponent component:");
     println!("  Version: {}", DecayComponent::VERSION);
     println!("  Mixins: {:?}", &["decayable"]);
-    println!("  Affected by laws: {:?}", &["decay"]);
+    println!("  Affected by laws: {:?}", &["decay", "resonance"]);
 
     // Create test entity with default values
     let entity = world.spawn((DecayComponent {
-        strength: 3.14,
-        half_life: 3.14,
-        last_update: 3.14,
+        strength: 1.0,
+        half_life: 300.0,
+        last_update: 0.0,
     },));
     println!("  ✅ Created test entity: {:?}", entity);
     println!("\n📋 Testing TemporalPosition component:");
     println!("  Version: {}", TemporalPosition::VERSION);
+    println!("  Affected by laws: {:?}", &["temporal_drift"]);
 
     // Create test entity with default values
     let entity = world.spawn((TemporalPosition {
         timestamp: chrono::Utc::now(),
-        precision: "test".to_string(),
+        precision: "day".to_string(),
         temporal_coordinates: vec![1.0, 2.0, 3.0],
-        time_zone_offset: 42,
+        time_zone_offset: 0,
     },));
     println!("  ✅ Created test entity: {:?}", entity);
     println!("\n📋 Testing MemoryLayer component:");
     println!("  Version: {}", MemoryLayer::VERSION);
+    println!("  Affected by laws: {:?}", &["memory_consolidation"]);
 
     // Create test entity with default values
     let entity = world.spawn((MemoryLayer {
-        layer_type: "test_value".to_string(),
-        access_frequency: 3.14,
+        layer_type: "working".to_string(),
+        access_frequency: 0.0,
         last_accessed: chrono::Utc::now(),
-        consolidation_status: "test_value".to_string(),
+        consolidation_status: "active".to_string(),
         redis_key: "test".to_string(),
     },));
     println!("  ✅ Created test entity: {:?}", entity);
@@ -407,7 +413,7 @@ fn schema_test_mode() {
 
     // Create test entity with default values
     let entity = world.spawn((Age {
-        age_days: 42,
+        age_days: 0,
         created_at: chrono::Utc::now(),
     },));
     println!("  ✅ Created test entity: {:?}", entity);
@@ -416,8 +422,8 @@ fn schema_test_mode() {
 
     // Create test entity with default values
     let entity = world.spawn((Mood {
-        mood_state: "test_value".to_string(),
-        intensity: 3.14,
+        mood_state: "neutral".to_string(),
+        intensity: 0.0,
     },));
     println!("  ✅ Created test entity: {:?}", entity);
     println!("\n📋 Testing ThreadType component:");
