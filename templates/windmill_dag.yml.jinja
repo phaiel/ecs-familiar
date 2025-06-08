@@ -1,0 +1,144 @@
+# GENERATED: Windmill DAG for {{ law.name }}
+# Generated via Copier from cold path quantum law schemas
+
+id: {{ law.name }}_quantum_dag
+version: {{ law.version }}
+description: "{{ law.description }}"
+
+# Execution configuration  
+kind: {% if law.dag_config.tick_scope %}tick{% elif law.dag_config.trigger_condition %}trigger{% else %}manual{% endif %}
+
+{% if law.dag_config.tick_scope -%}
+tick_scope: {{ law.dag_config.tick_scope }}
+{%- endif %}
+
+{% if law.dag_config.trigger_condition -%}
+trigger_condition: {{ law.dag_config.trigger_condition }}
+{%- endif %}
+
+# Input/Output specification
+inputs:
+{%- for input_type in law.dag_config.inputs %}
+  - {{ input_type }}
+{%- endfor %}
+
+outputs:
+{%- for output_type in law.dag_config.outputs %}
+  - {{ output_type }}
+{%- endfor %}
+
+# Execution parameters
+timeout_sec: {{ law.dag_config.timeout_sec }}
+retry_policy: {{ law.dag_config.retry_policy }}
+
+# Redpanda event configuration
+redpanda:
+  input_topic: {{ law.redpanda_events.topic }}
+  output_topic: {{ law.redpanda_events.topic }}_results
+  schema_registry: {{ law.redpanda_events.schema_registry | lower }}
+
+# Python QuTiP script
+python_script: |
+  import qutip as qt
+  import numpy as np
+  import json
+  from datetime import datetime
+  
+  def {{ law.name }}_calculation(event_data):
+      """{{ law.description }}"""
+      
+      # Extract data from Redpanda event
+      component_data = event_data['component_data']
+      quantum_params = event_data['quantum_params']
+      
+      # Quantum system setup
+      hilbert_dim = int(quantum_params['hilbert_dim'])
+      
+      {%- if law.name == "quantum_decay" %}
+      # Quantum decoherence using QuTiP
+      gamma_amp = quantum_params['gamma_amplitude']
+      gamma_phase = quantum_params['gamma_phase']
+      
+      # Pauli operators
+      sigma_z = qt.sigmaz()
+      sigma_minus = qt.sigmam()
+      
+      # Initial state (excited)
+      psi0 = qt.basis(2, 1)
+      
+      # Lindblad decoherence
+      c_ops = [np.sqrt(gamma_amp) * sigma_minus, np.sqrt(gamma_phase) * sigma_z]
+      
+      # Time evolution
+      if 'DecayComponent' in component_data:
+          half_life = component_data['DecayComponent']['half_life']
+          strength = component_data['DecayComponent']['strength']
+          
+          times = np.linspace(0, half_life/10, 50)
+          result = qt.mesolve(qt.qzero(2), psi0, times, c_ops)
+          
+          # Calculate new strength from population decay
+          final_pop = qt.expect(qt.basis(2,1) * qt.basis(2,1).dag(), result.states[-1])
+          new_strength = strength * float(final_pop)
+          
+          return {
+              'new_strength': max(new_strength, 0.01),
+              'decoherence_time': float(times[-1]),
+              'quantum_fidelity': float(final_pop)
+          }
+      
+      {%- elif law.name == "quantum_resonance" %}
+      # Driven quantum oscillator using QuTiP
+      drive_freq = quantum_params['drive_frequency']
+      drive_amp = quantum_params['drive_amplitude']
+      
+      # Harmonic oscillator operators
+      a = qt.destroy(hilbert_dim)
+      a_dag = qt.create(hilbert_dim)
+      n = qt.num(hilbert_dim)
+      
+      # Driven Hamiltonian
+      H = drive_freq * n + drive_amp * (a_dag + a)
+      
+      if 'DecayComponent' in component_data:
+          strength = component_data['DecayComponent']['strength']
+          
+          # Coherent state initial condition
+          alpha = np.sqrt(strength)
+          psi0 = qt.coherent(hilbert_dim, alpha)
+          
+          # Time evolution
+          times = np.linspace(0, 2*np.pi/drive_freq, 100)
+          result = qt.mesolve(H, psi0, times)
+          
+          # Calculate resonance amplification
+          final_energy = qt.expect(n, result.states[-1])
+          amplification = 1.0 + final_energy / hilbert_dim
+          new_strength = min(strength * amplification, 1.0)
+          
+          return {
+              'new_strength': float(new_strength),
+              'energy_gain': float(final_energy),
+              'amplification_factor': float(amplification)
+          }
+      {%- endif %}
+      
+      return {'error': 'No valid component data'}
+
+  # Main execution function
+  def process_quantum_event(event):
+      try:
+          result = {{ law.name }}_calculation(event)
+          return {
+              'success': True,
+              'result': result,
+              'timestamp': datetime.utcnow().isoformat(),
+              'law': '{{ law.name }}'
+          }
+      except Exception as e:
+          return {
+              'success': False,
+              'error': str(e),
+              'timestamp': datetime.utcnow().isoformat(),
+              'law': '{{ law.name }}'
+          } 

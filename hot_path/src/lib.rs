@@ -4,8 +4,10 @@
 pub mod gen {
     pub mod components;
     pub mod systems;
+    pub mod quantum_systems;
 }
 
 // Re-export for convenience
 pub use gen::components::*;
 pub use gen::systems::*;
+pub use gen::quantum_systems::*;

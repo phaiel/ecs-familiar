@@ -73,6 +73,28 @@ impl ComponentRegistry {
             {%- endfor %}
         ]
     }
+    
+    pub fn get_all_components() -> Vec<(&'static str, i32)> {
+        vec![
+            {%- for comp in component_types %}
+            ("{{ comp.name }}", {{ comp.version }}){% if not loop.last %},{% endif %}
+            {%- endfor %}
+        ]
+    }
+    
+    pub fn get_components_for_law(law_name: &str) -> Vec<&'static str> {
+        let mut components = Vec::new();
+        {%- for comp in component_types %}
+        {%- if comp.laws %}
+        {%- for law in comp.laws %}
+        if "{{ law }}" == law_name {
+            components.push("{{ comp.name }}");
+        }
+        {%- endfor %}
+        {%- endif %}
+        {%- endfor %}
+        components
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -1,0 +1,99 @@
+# GENERATED: Windmill DAG for quantum_decay
+# Generated via Copier from cold path quantum law schemas
+
+id: quantum_decay_quantum_dag
+version: 1
+description: "Quantum coherence decay using QuTiP decoherence models"
+
+# Execution configuration  
+kind: tick
+
+tick_scope: hourly
+
+
+
+# Input/Output specification
+inputs:
+  - DecayComponent
+  - Age
+
+outputs:
+  - DecayComponent
+
+# Execution parameters
+timeout_sec: 30
+retry_policy: exponential_backoff
+
+# Redpanda event configuration
+redpanda:
+  input_topic: quantum_decay_events
+  output_topic: quantum_decay_events_results
+  schema_registry: true
+
+# Python QuTiP script
+python_script: |
+  import qutip as qt
+  import numpy as np
+  import json
+  from datetime import datetime
+  
+  def quantum_decay_calculation(event_data):
+      """Quantum coherence decay using QuTiP decoherence models"""
+      
+      # Extract data from Redpanda event
+      component_data = event_data['component_data']
+      quantum_params = event_data['quantum_params']
+      
+      # Quantum system setup
+      hilbert_dim = int(quantum_params['hilbert_dim'])
+      # Quantum decoherence using QuTiP
+      gamma_amp = quantum_params['gamma_amplitude']
+      gamma_phase = quantum_params['gamma_phase']
+      
+      # Pauli operators
+      sigma_z = qt.sigmaz()
+      sigma_minus = qt.sigmam()
+      
+      # Initial state (excited)
+      psi0 = qt.basis(2, 1)
+      
+      # Lindblad decoherence
+      c_ops = [np.sqrt(gamma_amp) * sigma_minus, np.sqrt(gamma_phase) * sigma_z]
+      
+      # Time evolution
+      if 'DecayComponent' in component_data:
+          half_life = component_data['DecayComponent']['half_life']
+          strength = component_data['DecayComponent']['strength']
+          
+          times = np.linspace(0, half_life/10, 50)
+          result = qt.mesolve(qt.qzero(2), psi0, times, c_ops)
+          
+          # Calculate new strength from population decay
+          final_pop = qt.expect(qt.basis(2,1) * qt.basis(2,1).dag(), result.states[-1])
+          new_strength = strength * float(final_pop)
+          
+          return {
+              'new_strength': max(new_strength, 0.01),
+              'decoherence_time': float(times[-1]),
+              'quantum_fidelity': float(final_pop)
+          }
+      
+      return {'error': 'No valid component data'}
+
+  # Main execution function
+  def process_quantum_event(event):
+      try:
+          result = quantum_decay_calculation(event)
+          return {
+              'success': True,
+              'result': result,
+              'timestamp': datetime.utcnow().isoformat(),
+              'law': 'quantum_decay'
+          }
+      except Exception as e:
+          return {
+              'success': False,
+              'error': str(e),
+              'timestamp': datetime.utcnow().isoformat(),
+              'law': 'quantum_decay'
+          } 

@@ -1,125 +1,121 @@
-# 🧬 ECS Familiar - Schema-First Component Generation
+# 🧬 ECS Familiar - Modular Schema-First Generation
 
-A **100% schema-generated** Entity Component System (ECS) built with Rust, Hecs, and YAML-driven code generation using Copier templates.
+A **100% schema-generated** Entity Component System (ECS) built with Rust Hecs, featuring modular generation, quantum systems, and event-driven architecture.
 
-## ✨ Key Achievement
+## ✨ Key Features
 
-This project successfully implements the user's vision of **pure schema-first generation** where:
-- Cold path defines all component schemas in YAML
-- Hot path is entirely generated via Copier templates
-- No manual ECS code editing required
-- Runtime introspection of schema-component relationships
+- **🎯 Modular Generation**: Generate only what you need (ECS, quantum, DAGs, configs)
+- **⚛️ Quantum Systems**: QuTiP-powered quantum calculations via Redpanda events  
+- **🧭 Event-Driven**: Rust ECS → Redpanda → Windmill DAG → Python QuTiP
+- **📋 100% Schema-First**: All code generated from YAML definitions
+- **🔧 CI/CD Ready**: Full automation pipeline with validation
 
-## 🎯 Architecture Overview
+## 🚀 Quick Start
 
-```
-Cold Path (Schema Definition)          Hot Path (100% Generated)
-┌─────────────────────────────┐       ┌─────────────────────────────┐
-│ cold/instances/             │       │ hot_path/src/gen/           │
-│ ├── component_types.yml     │ ═══>  │ ├── components.rs           │
-│ └── physics_laws.yml        │       │ └── systems.rs              │
-└─────────────────────────────┘       │ hot_path/src/               │
-                                      │ ├── main.rs                 │
-                                      │ └── lib.rs                  │
-                                      └─────────────────────────────┘
-```
-
-## 🔧 Components
-
-**Schema-Driven Components** (10 total):
-- `EntityType` - Core entity identification
-- `DisplayText` - Text rendering component
-- `DecayComponent` ⚖️ - Physics: exponential decay
-- `TemporalPosition` - Time-based positioning
-- `MemoryLayer` - Memory system integration
-- `Age` ⚖️ - Physics: age-based decay
-- `Mood` - Emotional state tracking
-- `ThreadType` - Threading categorization
-- `ThreadName` - Thread identification
-- `ThreadId` - Thread UUID tracking
-
-## ⚖️ Physics Laws
-
-**Declarative Physics System**:
-- **Decay Law**: Applied to `DecayComponent`, `Age`
-- **Resonance Law**: Available for future components
-- Laws are declared in YAML and automatically generate ECS systems
-
-## 🚀 Usage
-
-### Quick Start
 ```bash
-# Run CI pipeline (validate → generate → check)
-make ci
+# Generate everything (recommended)
+python generate.py all
 
-# Development iteration
-make dev
-
-# Full regeneration
-make regen
-```
-
-### Manual Commands
-```bash
-# Validate schemas first
-python3 validate_schemas.py
-
-# Generate entire hot path
-python3 generate_all.py
+# Or generate specific targets
+python generate.py ecs       # Core ECS components & systems
+python generate.py quantum   # Quantum systems
+python generate.py dags      # Windmill DAG nodes
 
 # Run the ECS system
 cd hot_path && cargo run
+
+# Run quantum demo
+cd hot_path && cargo run -- --quantum-demo
 ```
 
-### Demo Modes
+## 🏗️ Architecture
+
+```
+YAML Schemas → Multiple Generators → Generated Code
+                                     ↓
+┌─────────────┐   🧬 ECS Generator   ┌─────────────────┐
+│ Components  │ ═════════════════>   │ components.rs   │
+│ Laws        │                      │ systems.rs      │  
+│ Entities    │   ⚛️ Quantum Gen     │ main.rs         │
+└─────────────┘ ═════════════════>   │ quantum_sys.rs  │
+                                     ├─────────────────┤
+                 🧭 DAG Generator     │ DAG nodes       │
+               ═════════════════>     │ QuTiP scripts   │
+                                     ├─────────────────┤
+                 📡 Config Gen        │ redpanda.yml    │
+               ═════════════════>     │ windmill.yml    │
+                                     └─────────────────┘
+```
+
+## 🎯 Modular Generation
+
+### Individual Targets
+
 ```bash
-# Test all schema components
-cargo run -- --schema-test
-
-# Show component registry
-cargo run -- --component-demo
-
-# View help
-cargo run -- --help
+python generate.py ecs           # Components, systems, main.rs
+python generate.py quantum       # Quantum event emitters
+python generate.py dags          # Windmill DAG nodes  
+python generate.py entities      # Entity blueprints
+python generate.py redpanda      # Event stream configs (stub)
+python generate.py windmill      # Workflow configs (stub)
 ```
 
-## 📋 Best Practices Implemented
+### Make Integration
 
-Following production-ready schema-first patterns:
-
-### ✅ Directory Structure
-- Generated code in `hot_path/src/gen/` (not main `src/`)
-- Cold path owns all schema definitions
-- Clean separation of concerns
-
-### ✅ CI/CD Integration
-- Makefile with `make ci` for validation pipeline
-- Rust formatting and compilation checks
-- Schema validation before generation
-
-### ✅ Type Safety
-- Pydantic validation of YAML schemas
-- Rust-aware Jinja filters (`rust_typemap`, `rust_default`)
-- Compile-time verification of generated code
-
-### ✅ Coverage Metrics
-```
-Module                    % Generated via Copier
-components.rs            100%
-systems.rs               100%  
-main.rs                  100%
-entity_blueprints        100%
-law_constants            100%
+```bash
+make ci                          # Full CI pipeline
+make quantum && make demo        # Generate quantum + run demo
+make ecs                         # Core ECS only
+make clean && make all           # Full regeneration
 ```
 
-## 🔍 Schema Definition
+## ⚛️ Quantum ECS System
 
-### Component Schema Example
+### Hybrid Architecture
+- **Rust ECS**: High-performance component queries and entity management
+- **Redpanda Events**: Stream quantum calculation requests
+- **Windmill DAGs**: Execute Python QuTiP quantum calculations
+- **Event Results**: Flow back through stream to update components
+
+### Example Flow
+```rust
+// 1. Rust ECS queries components
+for (entity, component) in world.query::<&DecayComponent>().iter() {
+    // 2. Emit Redpanda event for quantum calculation
+    let event = QuantumDecayEvent {
+        entity_id: entity.to_bits().get() as u32,
+        quantum_params: get_quantum_params(),
+        // ...
+    };
+    emit_to_redpanda("quantum_decay_events", &event)?;
+}
+
+// 3. Windmill DAG receives event and runs QuTiP calculation
+// 4. Results flow back through event stream
+// 5. ECS components updated with quantum results
+```
+
+### QuTiP Integration
+Generated DAG nodes include full QuTiP scripts:
+```python
+# Auto-generated in dags/quantum_decay_dag.yml
+def quantum_decay_calculation(event_data):
+    # QuTiP decoherence calculation
+    psi0 = qt.basis(2, 1)  # Excited state
+    c_ops = [np.sqrt(gamma) * qt.sigmam()]  # Lindblad operators
+    result = qt.mesolve(H, psi0, times, c_ops)
+    return {'new_strength': calculate_decay(result)}
+```
+
+## 🔧 Schema Definition
+
+### Components with Quantum Laws
 ```yaml
+# cold/instances/component_types.yml
 - name: DecayComponent
   version: 1
   mixins: ["decayable"]
-  laws: ["decay"]
+  laws: ["decay", "resonance"]  # Triggers quantum system generation
   fields:
     - name: strength
       type: float
@@ -127,196 +123,147 @@ law_constants            100%
     - name: half_life
       type: float
       default_value: 300.0
-    - name: last_update
-      type: float
 ```
 
-### Physics Law Integration
-Components declare which physics laws affect them:
+### Quantum Laws
 ```yaml
-laws: ["decay", "resonance"]  # Automatically generates systems
+# cold/instances/quantum_laws.yml
+- name: quantum_decay
+  description: "Quantum coherence decay using QuTiP decoherence models"
+  applies_to: [DecayComponent, Age]
+  execution:
+    runtime: python_qutip
+    ecs_bridge: rust_component_query
+    dag_node: windmill_tick
+    event_stream: redpanda
+  quantum_model:
+    hilbert_space_dim: 2
+    operators: ["sigma_minus", "sigma_z"]
+    solver: "mesolve"
 ```
 
-## 🧪 Testing
+## 📊 Generated Files
 
-The system includes comprehensive testing modes:
+The modular system generates different file sets based on targets:
+
+### ECS Target (`python generate.py ecs`)
+- `hot_path/src/gen/components.rs` - Component definitions
+- `hot_path/src/gen/systems.rs` - Physics law systems  
+- `hot_path/src/main.rs` - ECS application
+- `hot_path/src/lib.rs` - Module exports
+- `hot_path/Cargo.toml` - Dependencies
+
+### Quantum Target (`python generate.py quantum`)
+- `hot_path/src/gen/quantum_systems.rs` - Event emitters
+
+### DAGs Target (`python generate.py dags`) 
+- `dags/quantum_decay_dag.yml` - QuTiP decoherence calculation
+- `dags/quantum_resonance_dag.yml` - QuTiP driven systems
+
+### Config Targets (Stubs)
+- `redpanda/redpanda.yml` - Event stream configuration
+- `windmill/windmill.yml` - Workflow orchestration
+
+## 🎮 Demo Modes
 
 ```bash
-# Schema validation with Pydantic
-🔍 Validating YAML schemas...
-  ✅ Loaded 10 component definitions
-  ✅ Schema validation passed
+# Schema validation only
+python generate.py --validate
 
-# Component instantiation testing
-📋 Testing DecayComponent component:
-  Version: 1
-  Mixins: ["decayable"]
-  Affected by laws: ["decay"]
-  ✅ Created test entity: 2v1
+# Component registry demo
+cargo run -- --component-demo
 
-# Physics system verification
-⚡ Testing physics systems:
-  📊 Systems: 2, Entities: 10
+# Quantum system demo (see Redpanda events!)
+cargo run -- --quantum-demo
 ```
+
+## 🏆 Key Achievements
+
+### ✅ 100% Schema-First
+- **Zero manual ECS code** - everything generated from YAML
+- **Modular targets** - generate only what changed
+- **Type safety** - Pydantic validation → Rust compilation
+
+### ✅ Quantum Integration
+- **Hybrid architecture** - Rust ECS + Python QuTiP
+- **Event-driven** - Redpanda streams + Windmill DAGs
+- **Real quantum calculations** - Decoherence, driven systems
+
+### ✅ Production Ready
+- **CI/CD pipeline** - Validation → generation → compilation
+- **Modular design** - Independent generators
+- **Stub support** - Future functionality placeholders
 
 ## 🛠️ Technology Stack
 
-- **Language**: Rust
-- **ECS**: Hecs (lightweight, fast)
-- **Schema**: YAML + Pydantic validation
-- **Generation**: Jinja2 templates + Copier
-- **CLI**: colored, chrono, uuid
-- **CI**: Make + cargo toolchain
+- **ECS**: Rust + Hecs (high-performance)
+- **Quantum**: Python + QuTiP (scientific computation)
+- **Events**: Redpanda (streaming)
+- **Orchestration**: Windmill (DAG execution)
+- **Generation**: Jinja2 + YAML schemas
+- **Validation**: Pydantic + Rust compiler
 
-## 📊 Metrics
+## 🌟 Advanced Features
 
-**Schema Coverage**: 100% of ECS hot path generated
-- Components: 10/10 schema-generated
-- Systems: 100% law-driven generation  
-- Main loop: 100% schema-driven entity creation
-- Type registry: 100% runtime introspection
-
-**Compilation**: ✅ Zero errors, warnings expected for generated code
-
-## 🎯 Benefits Achieved
-
-1. **Schema-First Development**: All ECS behavior defined declaratively
-2. **Type Safety**: Pydantic + Rust compile-time validation
-3. **Zero Manual ECS Code**: Hot path is 100% generated
-4. **Runtime Introspection**: Component registry with law relationships
-5. **CI/CD Ready**: Full automation pipeline with validation
-6. **Maintainable**: Changes only require schema updates
+- **Component Mixins**: Reusable behavior patterns
+- **Law-Component Binding**: Automatic system generation
+- **Runtime Introspection**: Component registry with metadata
+- **Event Replay**: Observable and replayable quantum calculations
+- **Modular Architecture**: Generate individual subsystems
 
 ## 🔄 Development Workflow
 
 ```bash
-1. Edit YAML schemas in cold/instances/
-2. Run `make ci` to validate and regenerate
-3. Hot path automatically updated
-4. Zero manual code changes required
+1. Edit YAML schemas (cold/instances/)
+2. Run modular generation (python generate.py <target>)  
+3. Test compilation (make check)
+4. Run demos (make demo)
 ```
 
-This approach eliminates code drift and ensures the ECS system stays perfectly synchronized with schema definitions.
+**Zero drift** - schemas and code stay perfectly synchronized!
 
-## 🏗️ Advanced Features
+## 📁 Project Structure
 
-- **Component Mixins**: Reusable behavior patterns
-- **Law-Component DAG**: Automatic system generation
-- **Version Tracking**: Schema evolution support
-- **Memory Integration**: Redis-backed component storage
-- **Multi-threading**: Thread-aware component types
-
----
-
-**Result**: A production-ready, schema-first ECS system that achieves 100% code generation from YAML definitions while maintaining full type safety and runtime introspection capabilities.
-
-## 🧹 Clean Architecture Achievement
-
-**Hot Path File Structure** (100% Generated):
 ```
-hot_path/src/
-├── gen/
-│   ├── components.rs    (100% generated from YAML)
-│   └── systems.rs       (100% generated from YAML)
-├── main.rs              (100% generated from YAML)
-└── lib.rs               (100% generated from YAML)
-```
-
-**All legacy manual code removed** ✅ - Valuable patterns preserved in [`PRESERVED_HOT_PATH_LOGIC.md`](PRESERVED_HOT_PATH_LOGIC.md)
-
-**Migration Status**: **COMPLETE** 🎯
-- ✅ Zero manual ECS code remaining
-- ✅ 100% schema-first generation achieved  
-- ✅ All valuable logic documented for future reference
-- ✅ CI/CD pipeline validates schema → generation → compilation
-- ✅ Runtime introspection and component registry working
-- ✅ Physics laws automatically applied from YAML declarations
-
-## 🌌 Core Philosophy 
-
-Like living on Earth where gravity affects everything naturally through physics, entities in this system are influenced by laws defined in the schema - but the runtime has no awareness of the specific mathematics, it just experiences the effects.
-
-## 🏗️ Architecture
-
-**Cold Path (Universe Creator)** - Python
-- Defines all schemas, entities, components, and physical laws
-- Mathematical specifications: formulas, variables, constants, constraints  
-- Exports complete universe definition to JSON schema
-
-**Hot Path (Physics Simulator)** - Rust  
-- High-performance ECS runtime using Hecs
-- Pure physics simulator that executes mathematical laws from schema
-- No hardcoded behavior - laws apply naturally based on component values
-- GraphQL API for real-time interaction
-
-## ⚖️ Schema-Driven Physics
-
-Laws are defined mathematically in the cold path:
-
-```python
-decay_law = Law(
-    name="decay",
-    formula="strength = strength * pow(0.5, time_elapsed / half_life)",
-    variables=["strength", "half_life", "last_update"], 
-    constants={},
-    constraints={"strength": {"min": 0.1}}
-)
-```
-
-The hot path reads these specifications and executes them as pure physics:
-
-```rust
-// Physics simulator executes whatever laws exist in schema
-fn apply_law(formula: &str, entity: Entity, world: &mut World) {
-    // Parse and execute mathematical formula on entity components
-}
+├── cold/instances/           # YAML schema definitions
+│   ├── component_types.yml   # Component schemas
+│   ├── quantum_laws.yml      # Quantum law definitions  
+│   └── entity_blueprints.yml # Entity compositions
+├── generators/               # Modular generators
+│   ├── ecs.py               # Core ECS generation
+│   ├── quantum.py           # Quantum systems
+│   ├── dags.py              # DAG nodes
+│   └── base.py              # Shared functionality
+├── templates/               # Jinja2 templates
+│   ├── components.rs.jinja  # Component generation
+│   ├── quantum_system.rs.jinja # Quantum systems
+│   └── windmill_dag.yml.jinja # DAG nodes
+├── hot_path/src/gen/        # Generated Rust code
+├── dags/                    # Generated DAG nodes
+└── generate.py              # Modular CLI
 ```
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Python 3.11+ with Poetry
-- Rust 1.70+
+1. **Clone and setup**:
+   ```bash
+   git clone <repo>
+   cd fam_game
+   pip install -r requirements.txt
+   ```
 
-### Cold Path Setup
+2. **Generate everything**:
+   ```bash
+   python generate.py all
+   ```
 
-```bash
-cd cold_path
-poetry install
-poetry run python cli.py schema-dump
-```
+3. **Run quantum demo**:
+   ```bash
+   cd hot_path && cargo run -- --quantum-demo
+   ```
 
-This generates `assets/sample_schema.json` containing all entities, components, and physical laws.
+4. **See Redpanda events** flowing with quantum calculation requests!
 
-### Hot Path Setup
+---
 
-```bash
-cd hot_path
-cargo build  # Auto-generates Rust types from Python schemas
-cargo run    # Starts the physics simulation
-```
-
-Visit http://127.0.0.1:8000 for GraphQL API interface.
-
-## 🧬 Core Entities
-
-- **Moment**: Individual memory instances
-- **Thread**: Sequential chains of related moments  
-- **Binding**: Complex relationships between threads/moments
-- **Bond**, **Filament**, **Motif**: Higher-order memory structures
-
-## 🔗 Schema Bridge
-
-The build process automatically generates type-safe Rust code from Python Pydantic schemas:
-
-1. Python schemas export to JSON
-2. Custom build.rs generates Rust structs 
-3. Perfect type translation with UUIDs, enums, and proper validation
-
-## 📊 Real-time Monitoring
-
-The hot path provides colorful terminal output showing:
-- Entity counts by type
-- System status and trends  
-- Law execution statistics
-- Memory usage and performance 
+**🎯 Result**: A fully modular, schema-first ECS system with integrated quantum calculations, event streams, and 100% generated code from YAML definitions.

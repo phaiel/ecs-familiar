@@ -1,0 +1,54 @@
+# GENERATED: Windmill Workflow Configuration (STUB)
+# Future: Workflow schedules, triggers, resource management
+
+version: "1.0"
+
+# Windmill Instance Configuration
+instance:
+  name: "familiar-quantum-workflows"
+  description: "Quantum ECS workflow orchestration"
+  
+# TODO: Resource Pools
+resources:
+  python_runtime:
+    type: python
+    version: "3.11"
+    packages:
+      - qutip
+      - numpy
+      - scipy
+    
+  quantum_compute:
+    type: compute
+    memory: "2Gi"
+    cpu: "1000m"
+
+# TODO: Workflow Templates
+workflows:
+  quantum_calculation:
+    description: "Template for quantum calculations"
+    runtime: python
+    timeout: 300
+    retry_policy: linear_backoff
+    inputs:
+      - event_data
+    outputs:
+      - calculation_result
+
+# TODO: Schedule Configurations  
+schedules:
+  hourly_cleanup:
+    cron: "0 * * * *"
+    workflow: cleanup_quantum_states
+    
+  daily_consolidation:
+    cron: "0 2 * * *"
+    workflow: memory_consolidation
+
+# TODO: Event Triggers
+triggers:
+  redpanda_events:
+    type: kafka
+    brokers: ["localhost:9092"]
+    topics: ["quantum_decay_events", "quantum_resonance_events"]
+    consumer_group: "windmill-quantum"

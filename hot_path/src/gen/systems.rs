@@ -1,8 +1,8 @@
 // GENERATED CODE — DO NOT EDIT
 // Generated via Copier from YAML law specifications
-use crate::gen::components::*;
 use hecs::World;
 use std::time::{SystemTime, UNIX_EPOCH};
+use crate::gen::components::*;
 
 /// Physics law specifications loaded from schema
 #[derive(Debug, Clone)]
@@ -84,6 +84,7 @@ pub fn age_decay_system(world: &mut World, law_spec: &DecayLawSpec) {
     }
 }
 
+
 // Generate resonance systems for components that have "resonance" in their laws
 
 /// Resonance system for DecayComponent components  
@@ -94,17 +95,20 @@ pub fn decaycomponent_resonance_system(world: &mut World, law_spec: &ResonanceLa
     }
 }
 
+
 /// Apply all physics laws as ECS systems
 pub fn apply_all_physics_laws(world: &mut World, law_specs: &LawSpecifications) {
     // Apply decay systems to all components that declare "decay" law
-
+    
     decaycomponent_decay_system(world, &law_specs.decay_law);
-
+    
     age_decay_system(world, &law_specs.decay_law);
-
-    // Apply resonance systems to all components that declare "resonance" law
-
+    
+    
+    // Apply resonance systems to all components that declare "resonance" law  
+    
     decaycomponent_resonance_system(world, &law_specs.resonance_law);
+    
 }
 
 /// Comprehensive system statistics
@@ -122,28 +126,29 @@ pub struct ComprehensiveSystemStats {
     pub threadtype_entities: usize,
     pub threadname_entities: usize,
     pub threadid_entities: usize,
+    
 }
 
 /// Get comprehensive system statistics from schema
-pub fn get_comprehensive_system_stats(
-    world: &World,
-    _law_specs: &LawSpecifications,
-) -> ComprehensiveSystemStats {
+pub fn get_comprehensive_system_stats(world: &World, _law_specs: &LawSpecifications) -> ComprehensiveSystemStats {
     ComprehensiveSystemStats {
         // Count active systems based on schema law definitions
         active_systems: 0,
-
+        
         // Count entities by component type
-        total_affected_entities: world.query::<&EntityType>().iter().count()
-            + world.query::<&DisplayText>().iter().count()
-            + world.query::<&DecayComponent>().iter().count()
-            + world.query::<&TemporalPosition>().iter().count()
-            + world.query::<&MemoryLayer>().iter().count()
-            + world.query::<&Age>().iter().count()
-            + world.query::<&Mood>().iter().count()
-            + world.query::<&ThreadType>().iter().count()
-            + world.query::<&ThreadName>().iter().count()
-            + world.query::<&ThreadId>().iter().count(),
+        total_affected_entities: 
+        world.query::<&EntityType>().iter().count() + 
+        world.query::<&DisplayText>().iter().count() + 
+        world.query::<&DecayComponent>().iter().count() + 
+        world.query::<&TemporalPosition>().iter().count() + 
+        world.query::<&MemoryLayer>().iter().count() + 
+        world.query::<&Age>().iter().count() + 
+        world.query::<&Mood>().iter().count() + 
+        world.query::<&ThreadType>().iter().count() + 
+        world.query::<&ThreadName>().iter().count() + 
+        world.query::<&ThreadId>().iter().count()
+        ,
+        
         // Individual component counts
         entitytype_entities: world.query::<&EntityType>().iter().count(),
         displaytext_entities: world.query::<&DisplayText>().iter().count(),
@@ -155,5 +160,6 @@ pub fn get_comprehensive_system_stats(
         threadtype_entities: world.query::<&ThreadType>().iter().count(),
         threadname_entities: world.query::<&ThreadName>().iter().count(),
         threadid_entities: world.query::<&ThreadId>().iter().count(),
+        
     }
-}
+} 

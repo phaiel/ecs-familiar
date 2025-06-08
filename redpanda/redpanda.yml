@@ -1,0 +1,49 @@
+# GENERATED: Redpanda Event Stream Configuration (STUB)
+# Future: Topic configs, schemas, event routing
+
+version: "3.7"
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: redpanda-familiar
+    ports:
+      - "9092:9092"  # Kafka API
+      - "9644:9644"  # Admin API
+    environment:
+      REDPANDA_BROKERS: "redpanda:9092"
+    command:
+      - redpanda
+      - start
+      - --smp
+      - "1"
+      - --memory
+      - "512M"
+      - --reserve-memory
+      - "0M"
+      - --node-id
+      - "0"
+      - --kafka-addr
+      - "PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092"
+      - --advertise-kafka-addr
+      - "PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092"
+
+# TODO: Event Topics Configuration
+topics:
+  quantum_decay_events:
+    partitions: 3
+    replication_factor: 1
+    cleanup_policy: delete
+    retention_ms: 604800000  # 7 days
+    
+  quantum_resonance_events:
+    partitions: 3
+    replication_factor: 1
+    cleanup_policy: delete
+    retention_ms: 604800000  # 7 days
+
+# TODO: Schema Registry Configuration
+schemas:
+  quantum_event_schema:
+    type: avro
+    compatibility: BACKWARD

@@ -1,0 +1,65 @@
+# cold/instances/quantum_laws.yml
+# Quantum Physics Laws with QuTiP + Redpanda + Windmill DAG integration
+
+- name: quantum_decay
+  version: 1
+  description: "Quantum coherence decay using QuTiP decoherence models"
+  applies_to:
+    - DecayComponent
+    - Age
+  execution:
+    runtime: python_qutip
+    ecs_bridge: rust_component_query
+    dag_node: windmill_tick
+    event_stream: redpanda
+  quantum_model:
+    hilbert_space_dim: 2
+    operators: ["sigma_z", "sigma_plus", "sigma_minus"]
+    decoherence_channels: ["amplitude_damping", "phase_damping"]
+    master_equation: "lindblad"
+  dag_config:
+    tick_scope: hourly
+    retry_policy: exponential_backoff
+    timeout_sec: 30
+    inputs: ["DecayComponent", "Age"]
+    outputs: ["DecayComponent"]
+  redpanda_events:
+    topic: "quantum_decay_events"
+    schema_registry: true
+    event_types: ["state_before", "calculation_result", "state_after"]
+  constants:
+    gamma_amplitude: 0.1
+    gamma_phase: 0.05
+    temperature: 0.01
+  execution_order: 10
+
+- name: quantum_resonance
+  version: 1
+  description: "Quantum resonance using QuTiP driven systems"  
+  applies_to:
+    - DecayComponent
+  execution:
+    runtime: python_qutip
+    ecs_bridge: rust_component_query
+    dag_node: windmill_trigger
+    event_stream: redpanda
+  quantum_model:
+    hilbert_space_dim: 3
+    operators: ["creation", "annihilation", "number"]
+    hamiltonian: "driven_harmonic_oscillator"
+    solver: "mesolve"
+  dag_config:
+    trigger_condition: "strength > 0.85"
+    retry_policy: none
+    timeout_sec: 60
+    inputs: ["DecayComponent"]
+    outputs: ["DecayComponent"]
+  redpanda_events:
+    topic: "quantum_resonance_events"
+    schema_registry: true
+    event_types: ["trigger_detected", "hamiltonian_evolution", "measurement_result"]
+  constants:
+    drive_frequency: 1.0
+    drive_amplitude: 0.5
+    coupling_strength: 0.1
+  execution_order: 20
