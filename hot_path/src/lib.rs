@@ -1,11 +1,11 @@
-pub mod common;
-pub mod components;
-pub mod components_generated;  // Generated from YAML schema
-pub mod ecs;
-pub mod generated;   // Direct code generation from JSON schema  
-pub mod systems;     // ECS systems implementing physics laws
-pub mod schemas;
-pub mod config;
-pub mod graphql;
-pub mod persistence;
-pub mod schema_demo; // Demo of schema-first system 
+// GENERATED CODE — DO NOT EDIT
+// Generated via Copier from cold path YAML schemas
+
+pub mod gen {
+    pub mod components;
+    pub mod systems;
+}
+
+// Re-export for convenience
+pub use gen::components::*;
+pub use gen::systems::*;

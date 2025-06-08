@@ -1,0 +1,168 @@
+// GENERATED CODE — DO NOT EDIT
+// Generated via Copier from YAML law specifications
+use hecs::World;
+use std::time::{SystemTime, UNIX_EPOCH};
+use crate::gen::components::*;
+
+/// Physics law specifications loaded from schema
+#[derive(Debug, Clone)]
+pub struct LawSpecifications {
+    pub decay_law: DecayLawSpec,
+    pub resonance_law: ResonanceLawSpec,
+}
+
+#[derive(Debug, Clone)]
+pub struct DecayLawSpec {
+    pub formula: String,
+    pub applies_to: Vec<String>,
+    pub min_strength: f32,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResonanceLawSpec {
+    pub formula: String,
+    pub applies_to: Vec<String>,
+    pub threshold: f32,
+    pub multiplier: f32,
+    pub max_strength: f32,
+}
+
+impl LawSpecifications {
+    /// Load law specifications from schema definitions
+    pub fn from_schema() -> Self {
+        Self {
+            decay_law: DecayLawSpec {
+                formula: "strength = strength * pow(0.5, time_elapsed / half_life)".to_string(),
+                applies_to: vec![
+                    // Components that have "decay" in their laws array
+                    {% for comp in component_types -%}
+                    {%- if comp.laws and "decay" in comp.laws -%}
+                    "{{ comp.name }}".to_string(),
+                    {% endif -%}
+                    {% endfor -%}
+                ],
+                min_strength: 0.1,
+            },
+            resonance_law: ResonanceLawSpec {
+                formula: "strength = min(strength * multiplier, max_strength) if strength > threshold else strength".to_string(),
+                applies_to: vec![
+                    // Components that have "resonance" in their laws array  
+                    {% for comp in component_types -%}
+                    {%- if comp.laws and "resonance" in comp.laws -%}
+                    "{{ comp.name }}".to_string(),
+                    {% endif -%}
+                    {% endfor -%}
+                ],
+                threshold: 0.85,
+                multiplier: 1.2,
+                max_strength: 1.0,
+            },
+        }
+    }
+}
+
+// Generate decay systems for components that have "decay" in their laws
+{% for comp in component_types -%}
+{%- if comp.laws and "decay" in comp.laws %}
+/// Decay system for {{ comp.name }} components
+pub fn {{ comp.name | lower }}_decay_system(world: &mut World, law_spec: &DecayLawSpec) {
+    let current_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs_f32();
+
+    for (_entity, component) in world.query_mut::<&mut {{ comp.name }}>() {
+        // Simple decay formula for demonstration
+        // Apply to all components - they should have appropriate fields
+        {%- set has_strength = false %}
+        {%- for field in comp.fields -%}
+        {%- if field.name == "strength" %}{% set has_strength = true %}{% endif -%}
+        {%- endfor %}
+        
+        {%- if has_strength %}
+        // This component has a strength field - apply decay
+        component.strength = component.strength * (0.5_f32).powf(1.0 / 300.0); // Simple time step
+        
+        // Apply constraints from schema  
+        if component.strength < law_spec.min_strength {
+            component.strength = law_spec.min_strength;
+        }
+        {%- else %}
+        // No strength field found - skip decay for this component
+        {%- endif %}
+    }
+}
+{% endif -%}
+{% endfor %}
+
+// Generate resonance systems for components that have "resonance" in their laws
+{% for comp in component_types -%}
+{%- if comp.laws and "resonance" in comp.laws %}
+/// Resonance system for {{ comp.name }} components  
+pub fn {{ comp.name | lower }}_resonance_system(world: &mut World, law_spec: &ResonanceLawSpec) {
+    for (_entity, component) in world.query_mut::<&mut {{ comp.name }}>() {
+        // Apply resonance when strength is above threshold
+        {%- set has_strength = false %}
+        {%- for field in comp.fields -%}
+        {%- if field.name == "strength" %}{% set has_strength = true %}{% endif -%}
+        {%- endfor %}
+        
+        {%- if has_strength %}
+        if component.strength > law_spec.threshold {
+            // Apply resonance formula
+            let new_strength = component.strength * law_spec.multiplier;
+            component.strength = new_strength.min(law_spec.max_strength);
+        }
+        {%- else %}
+        // No strength field found - skip resonance for this component
+        {%- endif %}
+    }
+}
+{% endif -%}
+{% endfor %}
+
+/// Apply all physics laws as ECS systems
+pub fn apply_all_physics_laws(world: &mut World, law_specs: &LawSpecifications) {
+    // Apply decay systems to all components that declare "decay" law
+    {% for comp in component_types -%}
+    {%- if comp.laws and "decay" in comp.laws %}
+    {{ comp.name | lower }}_decay_system(world, &law_specs.decay_law);
+    {% endif -%}
+    {% endfor %}
+    
+    // Apply resonance systems to all components that declare "resonance" law  
+    {% for comp in component_types -%}
+    {%- if comp.laws and "resonance" in comp.laws %}
+    {{ comp.name | lower }}_resonance_system(world, &law_specs.resonance_law);
+    {% endif -%}
+    {% endfor %}
+}
+
+/// Comprehensive system statistics
+#[derive(Debug, Clone)]
+pub struct ComprehensiveSystemStats {
+    pub active_systems: usize,
+    pub total_affected_entities: usize,
+    {% for comp in component_types -%}
+    pub {{ comp.name | lower }}_entities: usize,
+    {% endfor %}
+}
+
+/// Get comprehensive system statistics from schema
+pub fn get_comprehensive_system_stats(world: &World, _law_specs: &LawSpecifications) -> ComprehensiveSystemStats {
+    ComprehensiveSystemStats {
+        // Count active systems based on schema law definitions
+        active_systems: {% set count = 0 %}{% for comp in component_types %}{% if comp.laws %}{% set count = count + comp.laws | length %}{% endif %}{% endfor %}{{ count }},
+        
+        // Count entities by component type
+        total_affected_entities: 
+        {% for comp in component_types -%}
+            world.query::<&{{ comp.name }}>().iter().count(){% if not loop.last %} + {% endif %}
+        {% endfor %},
+        
+        // Individual component counts
+        {% for comp in component_types -%}
+        {{ comp.name | lower }}_entities: world.query::<&{{ comp.name }}>().iter().count(),
+        {% endfor %}
+    }
+} 

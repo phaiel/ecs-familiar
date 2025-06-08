@@ -7,29 +7,40 @@ import yaml
 from pathlib import Path
 
 
-def rust_typemap(type_str: str) -> str:
-    """Map schema types to Rust types."""
-    type_mapping = {
+def rust_typemap(type: str):
+    return {
         'int': 'i32',
-        'float': 'f32', 
+        'float': 'f32',
         'str': 'String',
         'datetime': 'DateTime<Utc>',
         'bool': 'bool',
-        'vector': 'Vec<f32>',    # Use Vec instead of fixed array for serde compatibility
-        'enum': 'String',        # Will be proper enums in future
-    }
-    return type_mapping.get(type_str, type_str)
+        'vector': 'Vec<f32>',    # Dynamic vector for compatibility
+        'enum': 'String',        # or a generated enum
+    }.get(type, type)
 
 
-def rust_default(value, type_str: str) -> str:
+def rust_default(value, type_str: str = None) -> str:
     """Generate Rust default values."""
     if value is None:
-        return "Default::default()"
+        if type_str == 'str':
+            return '"".to_string()'
+        elif type_str in ['int', 'float']:
+            return '0'
+        elif type_str == 'bool':
+            return 'false'
+        elif type_str == 'datetime':
+            return 'Utc::now()'
+        elif type_str == 'vector':
+            return 'Vec::new()'
+        else:
+            return "Default::default()"
     
     if type_str == 'str':
-        return f'"{value}".to_string()'
+        # Escape quotes in strings
+        escaped = str(value).replace('"', '\\"')
+        return f'"{escaped}".to_string()'
     elif type_str == 'float':
-        return f'{value}_f32'
+        return f'{value}'
     elif type_str == 'int':
         return str(value)
     elif type_str == 'bool':
@@ -38,11 +49,18 @@ def rust_default(value, type_str: str) -> str:
         return 'Utc::now()'
     elif type_str == 'vector':
         if isinstance(value, list):
-            return f'vec![{", ".join(f"{v}_f32" for v in value)}]'
+            return f'vec![{", ".join(f"{v}" for v in value)}]'
         else:
             return 'Vec::new()'
     else:
-        return str(value)
+        # For unknown types or direct values
+        if isinstance(value, bool):
+            return 'true' if value else 'false'
+        elif isinstance(value, str):
+            escaped = value.replace('"', '\\"')
+            return f'"{escaped}".to_string()'
+        else:
+            return str(value)
 
 
 def load_yaml(file_path: str) -> list:

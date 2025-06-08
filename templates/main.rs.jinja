@@ -1,0 +1,293 @@
+// GENERATED CODE — DO NOT EDIT
+// Generated via Copier from cold path YAML schemas
+use std::thread;
+use std::time::{SystemTime, UNIX_EPOCH, Duration};
+use hecs::World;
+use uuid::Uuid;
+use colored::*;
+use chrono::Utc;
+
+mod gen {
+    pub mod components;
+    pub mod systems;
+}
+
+use gen::components::*;
+use gen::systems::*;
+
+// Helper function for UUID generation
+fn uuid4() -> Uuid {
+    Uuid::new_v4()
+}
+
+struct EcsMemorySystem {
+    world: World,
+    law_specifications: LawSpecifications,
+    last_status_update: SystemTime,
+    entity_count_history: Vec<usize>,
+}
+
+impl EcsMemorySystem {
+    fn new() -> Self {
+        let mut world = World::new();
+
+        // Create demo entities using schema-generated components
+        println!("{}", "🏗️ Creating demo entities with schema components...".bright_blue());
+        
+        {% for comp in component_types %}
+        // Create {{ comp.name }} entity
+        let {{ comp.name | lower }}_entity = world.spawn(({{ comp.name }} {
+            {%- for field in comp.fields %}
+            {%- if field.default_value is defined %}
+            {{ field.name }}: {{ field.default_value | rust_default(field.type) }},
+            {%- else %}
+            {%- if field.type == "int" %}
+            {{ field.name }}: 0,
+            {%- elif field.type == "float" %}
+            {{ field.name }}: 1.0,
+            {%- elif field.type == "str" %}
+            {{ field.name }}: "{{ comp.name | lower }}_{{ field.name }}".to_string(),
+            {%- elif field.type == "datetime" %}
+            {{ field.name }}: chrono::Utc::now(),
+            {%- elif field.type == "bool" %}
+            {{ field.name }}: false,
+            {%- elif field.type == "vector" %}
+            {{ field.name }}: Vec::new(),
+            {%- elif field.type == "enum" %}
+            {{ field.name }}: "default".to_string(),
+            {%- else %}
+            {{ field.name }}: Default::default(),
+            {%- endif %}
+            {%- endif %}
+            {%- endfor %}
+        },));
+        println!("  ✅ Created {{ comp.name }} entity: {:?}", {{ comp.name | lower }}_entity);
+        {% endfor %}
+
+        // Load physics law specifications from schema
+        let law_specifications = LawSpecifications::from_schema();
+        
+        println!("{}", "⚖️ Loaded physics systems from schema definitions".bright_purple());
+        println!("{}", "🧵 ECS Memory System initialized".bright_green());
+
+        Self {
+            world,
+            law_specifications,
+            last_status_update: SystemTime::now(),
+            entity_count_history: vec![],
+        }
+    }
+
+    fn run(&mut self) {
+        loop {
+            // Run ECS systems (schema-driven physics)
+            self.run_physics_systems();
+            
+            // Show status updates every 5 seconds
+            if self.last_status_update.elapsed().unwrap() > Duration::from_secs(5) {
+                self.show_status();
+                self.last_status_update = SystemTime::now();
+            }
+            
+            // Sleep briefly to avoid busy-waiting
+            thread::sleep(Duration::from_millis(100));
+        }
+    }
+
+    fn run_physics_systems(&mut self) {
+        // Apply all schema-defined physics laws as ECS systems
+        apply_all_physics_laws(&mut self.world, &self.law_specifications);
+    }
+
+    fn show_status(&mut self) {
+        let entity_counts = self.count_entities_by_component();
+        let total_entities = entity_counts.values().sum::<usize>();
+        let system_stats = get_comprehensive_system_stats(&self.world, &self.law_specifications);
+        
+        self.entity_count_history.push(total_entities);
+        if self.entity_count_history.len() > 10 {
+            self.entity_count_history.remove(0);
+        }
+
+        println!("\n{}", "━━━ Schema-Driven ECS Status ━━━".bright_purple().bold());
+        
+        // Show physics systems status
+        println!("{} {} systems affecting {} entities", 
+            "⚖️".bright_purple(), 
+            system_stats.active_systems.to_string().bright_yellow(),
+            system_stats.total_affected_entities.to_string().bright_cyan()
+        );
+        
+        // Show component counts from schema registry
+        {% for comp in component_types -%}
+        if let Some(count) = entity_counts.get("{{ comp.name }}") {
+            let icon = "{% if comp.laws %}⚖️{% else %}📦{% endif %}";
+            println!("{} {{ comp.name }}: {}", icon, count.to_string().bright_yellow());
+        }
+        {% endfor %}
+        
+        println!("{} {}", "Total entities:".bright_white(), total_entities.to_string().bright_green().bold());
+        
+        // Show law applications from schema
+        {% for comp in component_types -%}
+        {%- if comp.laws %}
+        println!("  📋 {{ comp.name }} affected by: {{ comp.laws | join(', ') }}");
+        {%- endif %}
+        {% endfor %}
+        
+        println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".bright_purple());
+    }
+
+    fn count_entities_by_component(&self) -> std::collections::HashMap<String, usize> {
+        let mut counts = std::collections::HashMap::new();
+        
+        // Use schema component registry to count entities
+        {% for comp in component_types -%}
+        let {{ comp.name | lower }}_count = self.world.query::<&{{ comp.name }}>().iter().count();
+        if {{ comp.name | lower }}_count > 0 {
+            counts.insert("{{ comp.name }}".to_string(), {{ comp.name | lower }}_count);
+        }
+        {% endfor %}
+        
+        counts
+    }
+}
+
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    
+    // Check for different modes
+    if args.len() > 1 {
+        match args[1].as_str() {
+            "--schema-test" => {
+                schema_test_mode();
+                return;
+            }
+            "--component-demo" => {
+                component_demo_mode();
+                return;
+            }
+            "--help" => {
+                print_help();
+                return;
+            }
+            _ => {}
+        }
+    }
+    
+    println!("{}", "🧬 Schema-First ECS Memory System Starting...".bright_green().bold());
+    println!("{}", "Generated from YAML schemas via Copier templates".bright_blue());
+    
+    let mut system = EcsMemorySystem::new();
+    system.run();
+}
+
+/// Schema component testing mode
+fn schema_test_mode() {
+    println!("{}", "🧪 Schema Component Test Mode".bright_yellow().bold());
+    println!("{}", "Testing all schema-generated components and physics laws".bright_white());
+    
+    let mut world = World::new();
+    let law_specs = LawSpecifications::from_schema();
+    
+    // Test creating entities with all schema components
+    {% for comp in component_types -%}
+    println!("\n📋 Testing {{ comp.name }} component:");
+    println!("  Version: {}", {{ comp.name }}::VERSION);
+    {%- if comp.mixins %}
+    println!("  Mixins: {:?}", &{{ comp.mixins | tojson }});
+    {%- endif %}
+    {%- if comp.laws %}
+    println!("  Affected by laws: {:?}", &{{ comp.laws | tojson }});
+    {%- endif %}
+    
+    // Create test entity with default values
+    let entity = world.spawn(({{ comp.name }} {
+        {%- for field in comp.fields %}
+        {%- if field.default_value is defined %}
+        {{ field.name }}: {{ field.default_value | rust_default(field.type) }},
+        {%- else %}
+        {%- if field.type == "int" %}
+        {{ field.name }}: 42,
+        {%- elif field.type == "float" %}
+        {{ field.name }}: 3.14,
+        {%- elif field.type == "str" %}
+        {{ field.name }}: "test".to_string(),
+        {%- elif field.type == "datetime" %}
+        {{ field.name }}: chrono::Utc::now(),
+        {%- elif field.type == "bool" %}
+        {{ field.name }}: true,
+        {%- elif field.type == "vector" %}
+        {{ field.name }}: vec![1.0, 2.0, 3.0],
+        {%- elif field.type == "enum" %}
+        {{ field.name }}: "test_value".to_string(),
+        {%- else %}
+        {{ field.name }}: Default::default(),
+        {%- endif %}
+        {%- endif %}
+        {%- endfor %}
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    {% endfor %}
+    
+    // Test physics systems
+    println!("\n⚡ Testing physics systems:");
+    apply_all_physics_laws(&mut world, &law_specs);
+    
+    let stats = get_comprehensive_system_stats(&world, &law_specs);
+    println!("  📊 Systems: {}, Entities: {}", stats.active_systems, stats.total_affected_entities);
+    
+    println!("\n✨ Schema test complete!");
+}
+
+/// Component demonstration mode
+fn component_demo_mode() {
+    println!("{}", "🎨 Component Demonstration Mode".bright_magenta().bold());
+    
+    // Show all schema-generated components
+    let all_components = ComponentRegistry::get_all_components();
+    println!("\n📋 All Schema Components:");
+    for (name, version) in all_components {
+        println!("  • {} v{}", name.bright_white(), version.to_string().bright_yellow());
+    }
+    
+    // Show law-component relationships
+    let decay_components = ComponentRegistry::get_components_for_law("decay");
+    if !decay_components.is_empty() {
+        println!("\n⚖️ Decay law affects:");
+        for comp in decay_components {
+            println!("  • {}", comp.bright_cyan());
+        }
+    }
+    
+    let resonance_components = ComponentRegistry::get_components_for_law("resonance");
+    if !resonance_components.is_empty() {
+        println!("\n⚖️ Resonance law affects:");
+        for comp in resonance_components {
+            println!("  • {}", comp.bright_cyan());
+        }
+    }
+    
+    println!("\n🎯 This demonstrates pure schema-to-code generation!");
+}
+
+/// Print help information
+fn print_help() {
+    println!("{}", "🧬 Schema-First ECS Familiar".bright_green().bold());
+    println!();
+    println!("{}", "USAGE:".bright_white().bold());
+    println!("  cargo run                    # Start schema-driven ECS simulation");
+    println!("  cargo run -- --schema-test   # Test all schema components and laws");  
+    println!("  cargo run -- --component-demo# Demo schema component registry");
+    println!("  cargo run -- --help          # Show this help");
+    println!();
+    println!("{}", "FEATURES:".bright_white().bold());
+    println!("  🧬 100% schema-generated components");
+    println!("  ⚖️ Physics laws from YAML definitions");
+    println!("  🎯 Type-safe Hecs ECS architecture");
+    println!("  🔄 Hot path generated from cold path");
+    println!();
+    println!("{}", "SCHEMA GENERATION:".bright_white().bold());
+    println!("  python3 generate_all.py     # Generate entire hot path from schemas");
+    println!("  python3 validate_schemas.py # Validate YAML schema definitions");
+} 

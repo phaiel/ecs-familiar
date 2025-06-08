@@ -1,486 +1,317 @@
-use std::thread;
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
-use tokio::runtime::Runtime;
-use crossbeam_channel::Receiver;
-use hecs::World;
-use uuid::Uuid;
+// GENERATED CODE — DO NOT EDIT
+// Generated via Copier from cold path YAML schemas
+use chrono::Utc;
 use colored::*;
+use hecs::World;
+use std::thread;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
 
-mod common;
-mod components;
-mod ecs;
-mod generated;
-mod systems;
-mod schemas;
-mod config;
-mod graphql;
-mod persistence;
+mod gen {
+    pub mod components;
+    pub mod systems;
+}
 
-use common::GqlCommand;
+use gen::components::*;
+use gen::systems::*;
 
 // Helper function for UUID generation
 fn uuid4() -> Uuid {
     Uuid::new_v4()
 }
 
-struct MemorySystem {
+struct EcsMemorySystem {
     world: World,
-    world_ref: std::sync::Arc<std::sync::Mutex<World>>,
-    command_receiver: Receiver<GqlCommand>,
+    law_specifications: LawSpecifications,
     last_status_update: SystemTime,
     entity_count_history: Vec<usize>,
-    start_time: SystemTime,
-    law_specifications: systems::LawSpecifications,
 }
 
-impl MemorySystem {
-    fn new(rx: Receiver<GqlCommand>, world_ref: std::sync::Arc<std::sync::Mutex<World>>) -> Self {
+impl EcsMemorySystem {
+    fn new() -> Self {
         let mut world = World::new();
-        let current_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs_f64();
 
-        // Spawn initial thread for demonstration
-        let initial_decay = components::DecayComponent {
+        // Create demo entities using schema-generated components
+        println!(
+            "{}",
+            "🏗️ Creating demo entities with schema components...".bright_blue()
+        );
+
+        // Create EntityType entity
+        let entitytype_entity = world.spawn((EntityType {
+            entity_type: "entitytype_entity_type".to_string(),
+        },));
+        println!("  ✅ Created EntityType entity: {:?}", entitytype_entity);
+
+        // Create DisplayText entity
+        let displaytext_entity = world.spawn((DisplayText {
+            content: "displaytext_content".to_string(),
+        },));
+        println!("  ✅ Created DisplayText entity: {:?}", displaytext_entity);
+
+        // Create DecayComponent entity
+        let decaycomponent_entity = world.spawn((DecayComponent {
             strength: 1.0,
-            half_life: 1800.0, // 30 minutes - very stable initial thread
-            last_update: current_time,
-        };
-        
-        let initial_thread = components::Thread {
-            base: components::BaseEntity {
-                id: Some(uuid4()),
-                org_id: uuid4(),
-                owner_id: uuid4(),
-                created_at: Some(chrono::Utc::now()),
-                updated_at: None,
-                deleted_at: None,
-                tags: vec!["initial".to_string()],
-                component_ids: vec![],
-                sub_type: Some("thread".to_string()),
-                visibility: components::Visibility::Private,
-                security_level: 0,
-                access_scope: vec![components::AccessScope::View],
-                version: 1,
-                parent_version: None,
-            },
-        };
-        
-        world.spawn((
-            initial_thread,
-            components::DisplayText("Memory Lane".to_string()), 
-            components::ThreadType("pathway".to_string()),
-            components::EntityType("thread".to_string()), 
-            initial_decay
-        ));
+            half_life: 1.0,
+            last_update: 1.0,
+        },));
+        println!(
+            "  ✅ Created DecayComponent entity: {:?}",
+            decaycomponent_entity
+        );
 
-        // Load law specifications from schema (not as entities, but as system configs)
-        let law_specifications = systems::LawSpecifications::from_schema();
+        // Create TemporalPosition entity
+        let temporalposition_entity = world.spawn((TemporalPosition {
+            timestamp: chrono::Utc::now(),
+            precision: "temporalposition_precision".to_string(),
+            temporal_coordinates: Vec::new(),
+            time_zone_offset: 0,
+        },));
+        println!(
+            "  ✅ Created TemporalPosition entity: {:?}",
+            temporalposition_entity
+        );
 
-        // Note: World sync will be handled differently since World doesn't implement Clone
-        // We'll implement entity sharing through queries instead
+        // Create MemoryLayer entity
+        let memorylayer_entity = world.spawn((MemoryLayer {
+            layer_type: "default".to_string(),
+            access_frequency: 1.0,
+            last_accessed: chrono::Utc::now(),
+            consolidation_status: "default".to_string(),
+            redis_key: "memorylayer_redis_key".to_string(),
+        },));
+        println!("  ✅ Created MemoryLayer entity: {:?}", memorylayer_entity);
 
-        println!("{}", "⚖️  Loaded 2 physics systems (decay, resonance)".bright_purple());
-        println!("{}", "🧵 Memory System initialized with initial thread and physics systems".bright_green());
+        // Create Age entity
+        let age_entity = world.spawn((Age {
+            age_days: 0,
+            created_at: chrono::Utc::now(),
+        },));
+        println!("  ✅ Created Age entity: {:?}", age_entity);
+
+        // Create Mood entity
+        let mood_entity = world.spawn((Mood {
+            mood_state: "default".to_string(),
+            intensity: 1.0,
+        },));
+        println!("  ✅ Created Mood entity: {:?}", mood_entity);
+
+        // Create ThreadType entity
+        let threadtype_entity = world.spawn((ThreadType {
+            thread_type: "threadtype_thread_type".to_string(),
+        },));
+        println!("  ✅ Created ThreadType entity: {:?}", threadtype_entity);
+
+        // Create ThreadName entity
+        let threadname_entity = world.spawn((ThreadName {
+            name: "threadname_name".to_string(),
+        },));
+        println!("  ✅ Created ThreadName entity: {:?}", threadname_entity);
+
+        // Create ThreadId entity
+        let threadid_entity = world.spawn((ThreadId {
+            id: "threadid_id".to_string(),
+        },));
+        println!("  ✅ Created ThreadId entity: {:?}", threadid_entity);
+
+        // Load physics law specifications from schema
+        let law_specifications = LawSpecifications::from_schema();
+
+        println!(
+            "{}",
+            "⚖️ Loaded physics systems from schema definitions".bright_purple()
+        );
+        println!("{}", "🧵 ECS Memory System initialized".bright_green());
 
         Self {
             world,
-            world_ref,
-            command_receiver: rx,
-            last_status_update: SystemTime::now(),
-            entity_count_history: vec![1], // Just the initial thread
-            start_time: SystemTime::now(),
             law_specifications,
+            last_status_update: SystemTime::now(),
+            entity_count_history: vec![],
         }
     }
 
     fn run(&mut self) {
         loop {
-            // Process GraphQL commands
-            self.process_commands();
-            
-            // Run ECS systems
-            self.run_ecs_systems();
-            
-            // Sync world state for GraphQL queries (lightweight approach)
-            self.sync_world_state();
-            
+            // Run ECS systems (schema-driven physics)
+            self.run_physics_systems();
+
             // Show status updates every 5 seconds
             if self.last_status_update.elapsed().unwrap() > Duration::from_secs(5) {
                 self.show_status();
                 self.last_status_update = SystemTime::now();
             }
-            
+
             // Sleep briefly to avoid busy-waiting
             thread::sleep(Duration::from_millis(100));
         }
     }
 
-    fn sync_world_state(&self) {
-        // Simple approach: serialize essential data for GraphQL queries
-        if let Ok(mut shared_world) = self.world_ref.try_lock() {
-            // Clear and rebuild shared world with current entities
-            shared_world.clear();
-            
-            // Copy entities with essential components for debugging
-            for (entity, (entity_type, display_text)) in self.world.query::<(&components::EntityType, &components::DisplayText)>().iter() {
-                let decay = self.world.get::<&components::DecayComponent>(entity);
-                
-                // Create new entity in shared world with all components at once
-                if let Ok(decay_comp) = decay {
-                    shared_world.spawn((
-                        components::EntityType(entity_type.0.clone()),
-                        components::DisplayText(display_text.0.clone()),
-                        components::DecayComponent {
-                            strength: decay_comp.strength,
-                            half_life: decay_comp.half_life,
-                            last_update: decay_comp.last_update,
-                        },
-                    ));
-                } else {
-                    shared_world.spawn((
-                        components::EntityType(entity_type.0.clone()),
-                        components::DisplayText(display_text.0.clone()),
-                    ));
-                }
-            }
-        }
-    }
-
-    // Note: Removed sync_world_ref since World doesn't implement Clone
-    // TODO: Implement proper entity data sharing mechanism for GraphQL queries
-
-    fn process_commands(&mut self) {
-        let current_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs_f64();
-
-        for cmd in self.command_receiver.try_iter() {
-            match cmd {
-                GqlCommand::CreateMoment { text, thread_id } => {
-                    let moment = components::Moment {
-                        base: components::BaseEntity {
-                            id: Some(uuid4()),
-                            org_id: uuid4(),
-                            owner_id: uuid4(),
-                            created_at: Some(chrono::Utc::now()),
-                            updated_at: None,
-                            deleted_at: None,
-                            tags: vec!["moment".to_string()],
-                            component_ids: vec![],
-                            sub_type: Some("moment".to_string()),
-                            visibility: components::Visibility::Private,
-                            security_level: 0,
-                            access_scope: vec![components::AccessScope::View],
-                            version: 1,
-                            parent_version: None,
-                        },
-                        thread_id: thread_id.parse().unwrap_or_default(),
-                        author_id: uuid4(),
-                        binding_hint: None,
-                        binding_id: None,
-                        cardinality: None,
-                    };
-                    let decay = components::DecayComponent {
-                        strength: 1.0,
-                        half_life: 300.0, // 5 minutes
-                        last_update: current_time,
-                    };
-                    self.world.spawn((
-                        moment,
-                        components::DisplayText(text.clone()), 
-                        components::ThreadId(thread_id.clone()), 
-                        components::EntityType("moment".to_string()), 
-                        decay
-                    ));
-                    println!("{} {}", "✨ Created moment:".bright_yellow(), text.bright_white());
-                }
-                GqlCommand::CreateThread { name, thread_type } => {
-                    let thread = components::Thread {
-                        base: components::BaseEntity {
-                            id: Some(uuid4()),
-                            org_id: uuid4(),
-                            owner_id: uuid4(),
-                            created_at: Some(chrono::Utc::now()),
-                            updated_at: None,
-                            deleted_at: None,
-                            tags: vec![thread_type.clone()],
-                            component_ids: vec![],
-                            sub_type: Some("thread".to_string()),
-                            visibility: components::Visibility::Private,
-                            security_level: 0,
-                            access_scope: vec![components::AccessScope::View],
-                            version: 1,
-                            parent_version: None,
-                        },
-                    };
-                    let decay = components::DecayComponent {
-                        strength: 1.0,
-                        half_life: 600.0, // 10 minutes
-                        last_update: current_time,
-                    };
-                    self.world.spawn((
-                        thread,
-                        components::DisplayText(name.clone()), 
-                        components::ThreadType(thread_type.clone()), 
-                        components::ThreadId(name.clone()),
-                        components::EntityType("thread".to_string()), 
-                        decay
-                    ));
-                    println!("{} {} ({})", "🧵 Created thread:".bright_blue(), name.bright_white(), thread_type.bright_cyan());
-                }
-                GqlCommand::CreateFilament { content, thread_name } => {
-                    let filament = components::Filament {
-                        base: components::BaseEntity {
-                            id: Some(uuid4()),
-                            org_id: uuid4(),
-                            owner_id: uuid4(),
-                            created_at: Some(chrono::Utc::now()),
-                            updated_at: None,
-                            deleted_at: None,
-                            tags: vec!["filament".to_string()],
-                            component_ids: vec![],
-                            sub_type: Some("filament".to_string()),
-                            visibility: components::Visibility::Private,
-                            security_level: 0,
-                            access_scope: vec![components::AccessScope::View],
-                            version: 1,
-                            parent_version: None,
-                        },
-                    };
-                    let decay = components::DecayComponent {
-                        strength: 1.0,
-                        half_life: 45.0,
-                        last_update: current_time,
-                    };
-                    self.world.spawn((
-                        filament,
-                        components::DisplayText(content.clone()), 
-                        components::ThreadName(thread_name.clone()), 
-                        components::EntityType("filament".to_string()), 
-                        decay
-                    ));
-                    println!("{} {} on {}", "🌱 Created filament:".bright_green(), content.bright_white(), thread_name.bright_cyan());
-                }
-                GqlCommand::CreateMotif { pattern, strength } => {
-                    let motif = components::Motif {
-                        base: components::BaseEntity {
-                            id: Some(uuid4()),
-                            org_id: uuid4(),
-                            owner_id: uuid4(),
-                            created_at: Some(chrono::Utc::now()),
-                            updated_at: None,
-                            deleted_at: None,
-                            tags: vec!["motif".to_string()],
-                            component_ids: vec![],
-                            sub_type: Some("motif".to_string()),
-                            visibility: components::Visibility::Private,
-                            security_level: 0,
-                            access_scope: vec![components::AccessScope::View],
-                            version: 1,
-                            parent_version: None,
-                        },
-                    };
-                    let decay = components::DecayComponent {
-                        strength: strength.max(0.1),
-                        half_life: 90.0,
-                        last_update: current_time,
-                    };
-                    self.world.spawn((
-                        motif,
-                        components::DisplayText(pattern.clone()), 
-                        components::EntityType("motif".to_string()), 
-                        decay
-                    ));
-                    println!("{} {} (strength: {})", "🎨 Created motif:".bright_magenta(), pattern.bright_white(), strength.to_string().bright_yellow());
-                }
-                GqlCommand::CreateBond { thread1, thread2, affinity } => {
-                    let bond = components::Bond {
-                        base: components::BaseEntity {
-                            id: Some(uuid4()),
-                            org_id: uuid4(),
-                            owner_id: uuid4(),
-                            created_at: Some(chrono::Utc::now()),
-                            updated_at: None,
-                            deleted_at: None,
-                            tags: vec!["bond".to_string(), thread1.clone(), thread2.clone()],
-                            component_ids: vec![],
-                            sub_type: Some("bond".to_string()),
-                            visibility: components::Visibility::Private,
-                            security_level: 0,
-                            access_scope: vec![components::AccessScope::View],
-                            version: 1,
-                            parent_version: None,
-                        },
-                        thread_ids: vec![],
-                        affinity_score: affinity as f64,
-                        bond_strength: (affinity * 0.8) as f64,
-                        component_context: vec![],
-                    };
-                    let decay = components::DecayComponent {
-                        strength: affinity,
-                        half_life: 120.0,
-                        last_update: current_time,
-                    };
-                    self.world.spawn((
-                        bond, 
-                        components::DisplayText(format!("{} ⟷ {}", thread1, thread2)), 
-                        components::EntityType("bond".to_string()), 
-                        decay
-                    ));
-                    println!("{} {} ⟷ {} (affinity: {})", "🔗 Created bond:".bright_red(), thread1.bright_white(), thread2.bright_white(), affinity.to_string().bright_yellow());
-                }
-                GqlCommand::CreateBinding { moment_id, thread_id } => {
-                    let thread_uuid = thread_id.parse().unwrap_or_default();
-                    let moment_uuid = moment_id.parse().unwrap_or_default();
-                    
-                    let binding_point = components::BindingPoint::new(
-                        thread_uuid,
-                        moment_uuid,
-                        components::Cardinality::Actor
-                    );
-                    
-                    let binding = components::Binding {
-                        base: components::BaseEntity {
-                            id: Some(uuid4()),
-                            org_id: uuid4(),
-                            owner_id: uuid4(),
-                            created_at: Some(chrono::Utc::now()),
-                            updated_at: None,
-                            deleted_at: None,
-                            tags: vec!["binding".to_string()],
-                            component_ids: vec![],
-                            sub_type: Some("binding".to_string()),
-                            visibility: components::Visibility::Private,
-                            security_level: 0,
-                            access_scope: vec![components::AccessScope::View],
-                            version: 1,
-                            parent_version: None,
-                        },
-                        points: vec![binding_point],
-                        thread_ids: vec![thread_uuid],
-                    };
-                    let decay = components::DecayComponent {
-                        strength: 0.8,
-                        half_life: 60.0,
-                        last_update: current_time,
-                    };
-                    self.world.spawn((
-                        binding,
-                        components::DisplayText(format!("Binding {} → {}", moment_id, thread_id)),
-                        components::EntityType("binding".to_string()),
-                        decay
-                    ));
-                    println!("{} {} → {}", "🔗 Created binding:".bright_cyan(), moment_id[0..8].bright_white(), thread_id[0..8].bright_white());
-                }
-                GqlCommand::UpdateStrength { entity_id, new_strength } => {
-                    // Parse entity ID (for now just log, real implementation would find entity by ID)
-                    println!("{} {} to {}", "⚡ Update strength:".bright_yellow(), entity_id[0..8].bright_white(), new_strength.to_string().bright_green());
-                    
-                    // TODO: Implement entity lookup by ID and component mutation
-                    // This requires adding entity ID tracking to components
-                }
-                GqlCommand::UpdateDisplayText { entity_id, new_text } => {
-                    println!("{} {} to '{}'", "📝 Update text:".bright_yellow(), entity_id[0..8].bright_white(), new_text.bright_white());
-                    
-                    // TODO: Implement entity lookup by ID and component mutation
-                }
-                GqlCommand::AddEntityTag { entity_id, tag } => {
-                    println!("{} {} with tag '{}'", "🏷️ Add tag:".bright_yellow(), entity_id[0..8].bright_white(), tag.bright_cyan());
-                    
-                    // TODO: Implement append-only tag addition to BaseEntity
-                }
-                GqlCommand::SoftDeleteEntity { entity_id } => {
-                    println!("{} {}", "🗑️ Soft delete:".bright_red(), entity_id[0..8].bright_white());
-                    
-                    // TODO: Implement soft deletion by setting deleted_at timestamp
-                }
-            }
-        }
-    }
-
-    fn run_ecs_systems(&mut self) {
-        // Run all ECS systems (which delegate to physics systems)
-        ecs::run_systems(&mut self.world, &self.law_specifications);
+    fn run_physics_systems(&mut self) {
+        // Apply all schema-defined physics laws as ECS systems
+        apply_all_physics_laws(&mut self.world, &self.law_specifications);
     }
 
     fn show_status(&mut self) {
-        let entity_count = self.count_entities_by_type();
-        let total_entities = entity_count.values().sum::<usize>();
-        let system_stats = systems::get_system_stats(&self.world, &self.law_specifications);
-        
+        let entity_counts = self.count_entities_by_component();
+        let total_entities = entity_counts.values().sum::<usize>();
+        let system_stats = get_comprehensive_system_stats(&self.world, &self.law_specifications);
+
         self.entity_count_history.push(total_entities);
         if self.entity_count_history.len() > 10 {
             self.entity_count_history.remove(0);
         }
 
-        println!("\n{}", "━━━ Memory System Status ━━━".bright_purple().bold());
-        
-        // Show physics systems status
-        println!("{} {} systems affecting {} entities", 
-            "⚖️".bright_purple(), 
-            system_stats.active_systems.to_string().bright_yellow(),
-            system_stats.affected_entities.to_string().bright_cyan()
+        println!(
+            "\n{}",
+            "━━━ Schema-Driven ECS Status ━━━".bright_purple().bold()
         );
-        
-        // Show entity counts (excluding law entities since laws are now systems)
-        for (entity_type, count) in &entity_count {
-            let icon = match entity_type.as_str() {
-                "thread" => "🧵",
-                "moment" => "✨", 
-                "binding" => "🔗",
-                "bond" => "🔗",
-                "filament" => "🌱",
-                "motif" => "🎨",
-                _ => "📦",
-            };
-            println!("{} {}: {}", icon, entity_type.bright_white(), count.to_string().bright_yellow());
+
+        // Show physics systems status
+        println!(
+            "{} {} systems affecting {} entities",
+            "⚖️".bright_purple(),
+            system_stats.active_systems.to_string().bright_yellow(),
+            system_stats
+                .total_affected_entities
+                .to_string()
+                .bright_cyan()
+        );
+
+        // Show component counts from schema registry
+        if let Some(count) = entity_counts.get("EntityType") {
+            let icon = "📦";
+            println!("{} EntityType: {}", icon, count.to_string().bright_yellow());
         }
-        
-        println!("{} {}", "Total entities:".bright_white(), total_entities.to_string().bright_green().bold());
-        
-        // Show trend
-        if self.entity_count_history.len() >= 2 {
-            let prev = self.entity_count_history[self.entity_count_history.len() - 2];
-            let curr = total_entities;
-            let trend = match curr.cmp(&prev) {
-                std::cmp::Ordering::Greater => format!("↗ +{}", curr - prev).bright_green(),
-                std::cmp::Ordering::Less => format!("↘ -{}", prev - curr).bright_red(),
-                std::cmp::Ordering::Equal => "→ stable".bright_blue(),
-            };
-            println!("{} {}", "Trend:".bright_white(), trend);
+        if let Some(count) = entity_counts.get("DisplayText") {
+            let icon = "📦";
+            println!(
+                "{} DisplayText: {}",
+                icon,
+                count.to_string().bright_yellow()
+            );
         }
-        println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━".bright_purple());
+        if let Some(count) = entity_counts.get("DecayComponent") {
+            let icon = "⚖️";
+            println!(
+                "{} DecayComponent: {}",
+                icon,
+                count.to_string().bright_yellow()
+            );
+        }
+        if let Some(count) = entity_counts.get("TemporalPosition") {
+            let icon = "📦";
+            println!(
+                "{} TemporalPosition: {}",
+                icon,
+                count.to_string().bright_yellow()
+            );
+        }
+        if let Some(count) = entity_counts.get("MemoryLayer") {
+            let icon = "📦";
+            println!(
+                "{} MemoryLayer: {}",
+                icon,
+                count.to_string().bright_yellow()
+            );
+        }
+        if let Some(count) = entity_counts.get("Age") {
+            let icon = "⚖️";
+            println!("{} Age: {}", icon, count.to_string().bright_yellow());
+        }
+        if let Some(count) = entity_counts.get("Mood") {
+            let icon = "📦";
+            println!("{} Mood: {}", icon, count.to_string().bright_yellow());
+        }
+        if let Some(count) = entity_counts.get("ThreadType") {
+            let icon = "📦";
+            println!("{} ThreadType: {}", icon, count.to_string().bright_yellow());
+        }
+        if let Some(count) = entity_counts.get("ThreadName") {
+            let icon = "📦";
+            println!("{} ThreadName: {}", icon, count.to_string().bright_yellow());
+        }
+        if let Some(count) = entity_counts.get("ThreadId") {
+            let icon = "📦";
+            println!("{} ThreadId: {}", icon, count.to_string().bright_yellow());
+        }
+
+        println!(
+            "{} {}",
+            "Total entities:".bright_white(),
+            total_entities.to_string().bright_green().bold()
+        );
+
+        // Show law applications from schema
+
+        println!("  📋 DecayComponent affected by: decay");
+
+        println!("  📋 Age affected by: decay");
+
+        println!("{}", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".bright_purple());
     }
 
-    fn count_entities_by_type(&self) -> std::collections::HashMap<String, usize> {
+    fn count_entities_by_component(&self) -> std::collections::HashMap<String, usize> {
         let mut counts = std::collections::HashMap::new();
-        
-        for (_entity, entity_type) in self.world.query::<&components::EntityType>().iter() {
-            *counts.entry(entity_type.0.clone()).or_insert(0) += 1;
+
+        // Use schema component registry to count entities
+        let entitytype_count = self.world.query::<&EntityType>().iter().count();
+        if entitytype_count > 0 {
+            counts.insert("EntityType".to_string(), entitytype_count);
         }
-        
+        let displaytext_count = self.world.query::<&DisplayText>().iter().count();
+        if displaytext_count > 0 {
+            counts.insert("DisplayText".to_string(), displaytext_count);
+        }
+        let decaycomponent_count = self.world.query::<&DecayComponent>().iter().count();
+        if decaycomponent_count > 0 {
+            counts.insert("DecayComponent".to_string(), decaycomponent_count);
+        }
+        let temporalposition_count = self.world.query::<&TemporalPosition>().iter().count();
+        if temporalposition_count > 0 {
+            counts.insert("TemporalPosition".to_string(), temporalposition_count);
+        }
+        let memorylayer_count = self.world.query::<&MemoryLayer>().iter().count();
+        if memorylayer_count > 0 {
+            counts.insert("MemoryLayer".to_string(), memorylayer_count);
+        }
+        let age_count = self.world.query::<&Age>().iter().count();
+        if age_count > 0 {
+            counts.insert("Age".to_string(), age_count);
+        }
+        let mood_count = self.world.query::<&Mood>().iter().count();
+        if mood_count > 0 {
+            counts.insert("Mood".to_string(), mood_count);
+        }
+        let threadtype_count = self.world.query::<&ThreadType>().iter().count();
+        if threadtype_count > 0 {
+            counts.insert("ThreadType".to_string(), threadtype_count);
+        }
+        let threadname_count = self.world.query::<&ThreadName>().iter().count();
+        if threadname_count > 0 {
+            counts.insert("ThreadName".to_string(), threadname_count);
+        }
+        let threadid_count = self.world.query::<&ThreadId>().iter().count();
+        if threadid_count > 0 {
+            counts.insert("ThreadId".to_string(), threadid_count);
+        }
+
         counts
     }
-
-    // Note: Law loading is now handled by systems::LawSpecifications::from_schema()
-    // Laws are no longer entities - they are system configurations
 }
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    
+
     // Check for different modes
     if args.len() > 1 {
         match args[1].as_str() {
-            "--debug" => {
-                debug_mode();
+            "--schema-test" => {
+                schema_test_mode();
                 return;
             }
-            "--schema-demo" => {
-                schema_demo_mode();
+            "--component-demo" => {
+                component_demo_mode();
                 return;
             }
             "--help" => {
@@ -490,139 +321,198 @@ fn main() {
             _ => {}
         }
     }
-    
-    println!("{}", "🧵 Familiar Memory System Starting...".bright_green().bold());
-    println!("{}", "🚀 GraphiQL IDE will be available at http://127.0.0.1:8000".bright_blue());
 
-    // Load configuration  
-    let _settings = config::Settings::new().unwrap_or_else(|e| {
-        eprintln!("Failed to load settings: {}", e);
-        // Create a basic default settings
-        config::Settings {
-            api_key: "default_key".to_string(),
-        }
-    });
+    println!(
+        "{}",
+        "🧬 Schema-First ECS Memory System Starting..."
+            .bright_green()
+            .bold()
+    );
+    println!(
+        "{}",
+        "Generated from YAML schemas via Copier templates".bright_blue()
+    );
 
-    // Set up GraphQL command channel
-    let (tx, rx) = crossbeam_channel::unbounded();
-
-    // Create shared world reference for GraphQL queries
-    let world_ref = std::sync::Arc::new(std::sync::Mutex::new(World::new()));
-    let world_for_gql = world_ref.clone();
-
-    // Spawn the GraphQL server in a separate thread
-    let gql_sender = tx.clone();
-    thread::spawn(move || {
-        let rt = Runtime::new().unwrap();
-        rt.block_on(graphql::run_graphql_server(gql_sender, world_for_gql));
-    });
-
-    // Initialize and run the memory system
-    let mut memory_system = MemorySystem::new(rx, world_ref);
-    memory_system.run();
+    let mut system = EcsMemorySystem::new();
+    system.run();
 }
 
-/// 🐛 DEBUG MODE: Simple command-line world inspector
-fn debug_mode() {
-    println!("{}", "🐛 Debug Mode - ECS World Inspector".bright_yellow().bold());
-    
-    // Create a simple world with test data
+/// Schema component testing mode
+fn schema_test_mode() {
+    println!("{}", "🧪 Schema Component Test Mode".bright_yellow().bold());
+    println!(
+        "{}",
+        "Testing all schema-generated components and physics laws".bright_white()
+    );
+
     let mut world = World::new();
-    let current_time = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs_f64();
-    
-    // Add some test entities
-    world.spawn((
-        components::EntityType("thread".to_string()),
-        components::DisplayText("Debug Thread".to_string()),
-        components::DecayComponent { strength: 1.0, half_life: 600.0, last_update: current_time },
-    ));
-    
-    world.spawn((
-        components::EntityType("moment".to_string()),
-        components::DisplayText("Debug Memory".to_string()),
-        components::DecayComponent { strength: 0.8, half_life: 300.0, last_update: current_time },
-    ));
-    
-    world.spawn((
-        components::EntityType("filament".to_string()),
-        components::DisplayText("Rapid Decay Thought".to_string()),
-        components::DecayComponent { strength: 0.9, half_life: 45.0, last_update: current_time },
-    ));
-    
-    // Display world state
-    println!("\n{}", "━━━ ECS World State ━━━".bright_purple());
-    
-    let mut entity_count = 0;
-    for (entity, (etype, display_text, decay)) in world.query::<(
-        &components::EntityType,
-        &components::DisplayText,
-        &components::DecayComponent
-    )>().iter() {
-        entity_count += 1;
-        let icon = match etype.0.as_str() {
-            "thread" => "🧵",
-            "moment" => "✨", 
-            "filament" => "🌱",
-            _ => "📦",
-        };
-        
-        println!("{} {} {} (strength: {:.2}, half-life: {}s)", 
-            icon, 
-            format!("Entity-{:?}", entity).bright_blue(),
-            display_text.0.bright_white(),
-            decay.strength.to_string().bright_yellow(),
-            decay.half_life.to_string().bright_cyan()
+    let law_specs = LawSpecifications::from_schema();
+
+    // Test creating entities with all schema components
+    println!("\n📋 Testing EntityType component:");
+    println!("  Version: {}", EntityType::VERSION);
+
+    // Create test entity with default values
+    let entity = world.spawn((EntityType {
+        entity_type: "test".to_string(),
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    println!("\n📋 Testing DisplayText component:");
+    println!("  Version: {}", DisplayText::VERSION);
+
+    // Create test entity with default values
+    let entity = world.spawn((DisplayText {
+        content: "test".to_string(),
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    println!("\n📋 Testing DecayComponent component:");
+    println!("  Version: {}", DecayComponent::VERSION);
+    println!("  Mixins: {:?}", &["decayable"]);
+    println!("  Affected by laws: {:?}", &["decay"]);
+
+    // Create test entity with default values
+    let entity = world.spawn((DecayComponent {
+        strength: 3.14,
+        half_life: 3.14,
+        last_update: 3.14,
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    println!("\n📋 Testing TemporalPosition component:");
+    println!("  Version: {}", TemporalPosition::VERSION);
+
+    // Create test entity with default values
+    let entity = world.spawn((TemporalPosition {
+        timestamp: chrono::Utc::now(),
+        precision: "test".to_string(),
+        temporal_coordinates: vec![1.0, 2.0, 3.0],
+        time_zone_offset: 42,
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    println!("\n📋 Testing MemoryLayer component:");
+    println!("  Version: {}", MemoryLayer::VERSION);
+
+    // Create test entity with default values
+    let entity = world.spawn((MemoryLayer {
+        layer_type: "test_value".to_string(),
+        access_frequency: 3.14,
+        last_accessed: chrono::Utc::now(),
+        consolidation_status: "test_value".to_string(),
+        redis_key: "test".to_string(),
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    println!("\n📋 Testing Age component:");
+    println!("  Version: {}", Age::VERSION);
+    println!("  Mixins: {:?}", &["decayable"]);
+    println!("  Affected by laws: {:?}", &["decay"]);
+
+    // Create test entity with default values
+    let entity = world.spawn((Age {
+        age_days: 42,
+        created_at: chrono::Utc::now(),
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    println!("\n📋 Testing Mood component:");
+    println!("  Version: {}", Mood::VERSION);
+
+    // Create test entity with default values
+    let entity = world.spawn((Mood {
+        mood_state: "test_value".to_string(),
+        intensity: 3.14,
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    println!("\n📋 Testing ThreadType component:");
+    println!("  Version: {}", ThreadType::VERSION);
+
+    // Create test entity with default values
+    let entity = world.spawn((ThreadType {
+        thread_type: "test".to_string(),
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    println!("\n📋 Testing ThreadName component:");
+    println!("  Version: {}", ThreadName::VERSION);
+
+    // Create test entity with default values
+    let entity = world.spawn((ThreadName {
+        name: "test".to_string(),
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+    println!("\n📋 Testing ThreadId component:");
+    println!("  Version: {}", ThreadId::VERSION);
+
+    // Create test entity with default values
+    let entity = world.spawn((ThreadId {
+        id: "test".to_string(),
+    },));
+    println!("  ✅ Created test entity: {:?}", entity);
+
+    // Test physics systems
+    println!("\n⚡ Testing physics systems:");
+    apply_all_physics_laws(&mut world, &law_specs);
+
+    let stats = get_comprehensive_system_stats(&world, &law_specs);
+    println!(
+        "  📊 Systems: {}, Entities: {}",
+        stats.active_systems, stats.total_affected_entities
+    );
+
+    println!("\n✨ Schema test complete!");
+}
+
+/// Component demonstration mode
+fn component_demo_mode() {
+    println!(
+        "{}",
+        "🎨 Component Demonstration Mode".bright_magenta().bold()
+    );
+
+    // Show all schema-generated components
+    let all_components = ComponentRegistry::get_all_components();
+    println!("\n📋 All Schema Components:");
+    for (name, version) in all_components {
+        println!(
+            "  • {} v{}",
+            name.bright_white(),
+            version.to_string().bright_yellow()
         );
     }
-    
-    println!("\n{} {}", "Total entities:".bright_white(), entity_count.to_string().bright_green());
-    
-    // Show law specifications
-    let law_specs = systems::LawSpecifications::from_schema();
-    println!("\n{}", "━━━ Physics Laws ━━━".bright_purple());
-    println!("🔄 Decay applies to: {:?}", law_specs.decay_law.applies_to);
-    println!("⚡ Resonance threshold: {}", law_specs.resonance_law.threshold);
-    
-    println!("\n{}", "🚀 Run with GraphQL interface: cargo run".bright_green());
-    println!("{}", "📊 GraphiQL available at: http://127.0.0.1:8000".bright_blue());
-}
 
-/// 🧪 SCHEMA DEMO MODE: Demonstrate schema-first component system
-fn schema_demo_mode() {
-    println!("{}", "🧪 ECS Familiar - Schema-First Demo".bright_yellow().bold());
-    println!("{}", "This demonstrates the new YAML + Copier component generation system".bright_white());
-    
-    // Run the schema demos
-    if let Err(e) = std::panic::catch_unwind(|| {
-        familiar_hot_path::schema_demo::demo_schema_components();
-        familiar_hot_path::schema_demo::compare_component_systems();
-    }) {
-        println!("{}", format!("❌ Demo error: {:?}", e).bright_red());
-        println!("{}", "Make sure components_generated.rs exists by running: python3 generate_components.py".bright_yellow());
+    // Show law-component relationships
+    let decay_components = ComponentRegistry::get_components_for_law("decay");
+    if !decay_components.is_empty() {
+        println!("\n⚖️ Decay law affects:");
+        for comp in decay_components {
+            println!("  • {}", comp.bright_cyan());
+        }
     }
+
+    let resonance_components = ComponentRegistry::get_components_for_law("resonance");
+    if !resonance_components.is_empty() {
+        println!("\n⚖️ Resonance law affects:");
+        for comp in resonance_components {
+            println!("  • {}", comp.bright_cyan());
+        }
+    }
+
+    println!("\n🎯 This demonstrates pure schema-to-code generation!");
 }
 
 /// Print help information
 fn print_help() {
-    println!("{}", "🧵 ECS Familiar - Schema-Driven Memory Simulation".bright_green().bold());
+    println!("{}", "🧬 Schema-First ECS Familiar".bright_green().bold());
     println!();
     println!("{}", "USAGE:".bright_white().bold());
-    println!("  cargo run                 # Start memory system with GraphQL interface");
-    println!("  cargo run -- --debug      # Debug mode - inspect world state");  
-    println!("  cargo run -- --schema-demo# Demo the new schema-first component system");
-    println!("  cargo run -- --help       # Show this help");
+    println!("  cargo run                    # Start schema-driven ECS simulation");
+    println!("  cargo run -- --schema-test   # Test all schema components and laws");
+    println!("  cargo run -- --component-demo# Demo schema component registry");
+    println!("  cargo run -- --help          # Show this help");
     println!();
     println!("{}", "FEATURES:".bright_white().bold());
-    println!("  🌐 GraphQL API at http://127.0.0.1:8000");
-    println!("  📊 Real-time world debugging");
-    println!("  ⚖️  Schema-driven physics laws");
-    println!("  🧬 Type-safe component generation");
-    println!("  🔄 Hot/cold path architecture");
+    println!("  🧬 100% schema-generated components");
+    println!("  ⚖️ Physics laws from YAML definitions");
+    println!("  🎯 Type-safe Hecs ECS architecture");
+    println!("  🔄 Hot path generated from cold path");
     println!();
     println!("{}", "SCHEMA GENERATION:".bright_white().bold());
-    println!("  python3 generate_components.py  # Generate Rust components from YAML");
-    println!("  python3 cold_path/schema_integration.py  # Test Pydantic integration");
-} 
+    println!("  python3 generate_all.py     # Generate entire hot path from schemas");
+    println!("  python3 validate_schemas.py # Validate YAML schema definitions");
+}

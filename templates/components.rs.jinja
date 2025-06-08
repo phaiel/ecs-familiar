@@ -40,7 +40,7 @@ impl {{ comp.name }} {
     pub fn new() -> Self {
         Self {
             {%- for field in comp.fields %}
-            {{ field.name }}: {{ field.default | rust_default(field.type) }},
+            {{ field.name }}: {{ field.default_value | rust_default(field.type) }},
             {%- endfor %}
         }
     }

@@ -2,30 +2,30 @@ use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let schema_path = "../assets/sample_schema.json";
-    
+
     // Check if schema file exists
     if !Path::new(schema_path).exists() {
         panic!(
             "Schema file not found at {}. \
-            Please run: cd ../cold_path && python cli.py schema-dump", 
+            Please run: cd ../cold_path && python cli.py schema-dump",
             schema_path
         );
     }
-    
+
     println!("🔧 Generating types from schema: {}", schema_path);
-    
+
     // Generate simple, direct Rust types
     let generated_code = generate_rust_types()?;
-    
+
     // Write to src/generated.rs
     let output_path = "src/generated.rs";
     std::fs::write(output_path, generated_code)?;
-    
+
     println!("✅ Generated types written to: {}", output_path);
-    
+
     // Tell cargo to rerun if schema changes
     println!("cargo:rerun-if-changed={}", schema_path);
-    
+
     Ok(())
 }
 
@@ -270,6 +270,6 @@ impl BindingPoint {
     }
 }
 "#;
-    
+
     Ok(code.to_string())
-} 
+}

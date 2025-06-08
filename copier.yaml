@@ -1,12 +1,3 @@
 _templates_suffix: .jinja
-
-# Questions for Copier (can be empty for local generation)
-questions: []
-
-# Extensions to load custom filters
-_extensions:
-  - copier_setup.py
-
-# Build tasks
-_tasks:
-  - "echo 'Generated Rust components from YAML schema'" 
+data:
+  component_types: "{{ load_yaml('cold/instances/component_types.yml') }}" 
