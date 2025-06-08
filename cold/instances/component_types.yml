@@ -1,0 +1,111 @@
+# cold/instances/component_types.yml
+
+# Memory System Components
+- name: EntityType
+  version: 1
+  mixins: []
+  laws: []
+  fields:
+    - name: entity_type
+      type: str
+
+- name: DisplayText
+  version: 1
+  mixins: []
+  laws: []
+  fields:
+    - name: content
+      type: str
+
+- name: DecayComponent
+  version: 1
+  mixins: ["decayable"]
+  laws: ["decay"]
+  fields:
+    - name: strength
+      type: float
+      default: 1.0
+    - name: half_life
+      type: float
+      default: 300.0
+    - name: last_update
+      type: float
+
+- name: TemporalPosition
+  version: 1
+  mixins: []
+  laws: []
+  fields:
+    - name: timestamp
+      type: datetime
+    - name: precision
+      type: str
+    - name: temporal_coordinates
+      type: vector
+    - name: time_zone_offset
+      type: int
+
+- name: MemoryLayer
+  version: 1
+  mixins: []
+  laws: []
+  fields:
+    - name: layer_type
+      type: enum
+    - name: access_frequency
+      type: float
+      default: 0.0
+    - name: last_accessed
+      type: datetime
+    - name: consolidation_status
+      type: enum
+    - name: redis_key
+      type: str
+
+# Example Components from Plan
+- name: Age
+  version: 1
+  mixins: ["decayable"]
+  laws: ["decay"]
+  fields:
+    - name: age_days
+      type: int
+      default: 0
+    - name: created_at
+      type: datetime
+
+- name: Mood
+  version: 1
+  mixins: []
+  laws: []
+  fields:
+    - name: mood_state
+      type: enum
+    - name: intensity
+      type: float
+      default: 0.0
+
+# Thread System Components
+- name: ThreadType
+  version: 1
+  mixins: []
+  laws: []
+  fields:
+    - name: thread_type
+      type: str
+
+- name: ThreadName
+  version: 1
+  mixins: []
+  laws: []
+  fields:
+    - name: name
+      type: str
+
+- name: ThreadId
+  version: 1
+  mixins: []
+  laws: []
+  fields:
+    - name: id
+      type: str 

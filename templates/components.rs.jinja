@@ -1,0 +1,84 @@
+// GENERATED CODE — DO NOT EDIT
+// Generated from cold/instances/component_types.yml via copier
+use chrono::prelude::*;
+use uuid::Uuid;
+use serde::{Deserialize, Serialize};
+
+// Vector type for embeddings (768-dimensional by default)
+pub type Vector = [f32; 768];
+
+{% for comp in component_types %}
+/// {{ comp.name }} Component (v{{ comp.version }})
+{%- if comp.mixins %}
+/// Mixins: {{ comp.mixins | join(", ") }}
+{%- endif %}
+{%- if comp.laws %}
+/// Governed by laws: {{ comp.laws | join(", ") }}
+{%- endif %}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct {{ comp.name }} {
+    {%- for field in comp.fields %}
+    pub {{ field.name }}: {{ field.type | rust_typemap }},
+    {%- endfor %}
+}
+
+impl {{ comp.name }} {
+    pub const VERSION: i32 = {{ comp.version }};
+    
+    {%- if comp.mixins %}
+    pub const MIXINS: &'static [&'static str] = &[
+        {%- for mixin in comp.mixins %}"{{ mixin }}"{% if not loop.last %}, {% endif %}{% endfor %}
+    ];
+    {%- endif %}
+    
+    {%- if comp.laws %}
+    pub const LAWS: &'static [&'static str] = &[
+        {%- for law in comp.laws %}"{{ law }}"{% if not loop.last %}, {% endif %}{% endfor %}
+    ];
+    {%- endif %}
+
+    pub fn new() -> Self {
+        Self {
+            {%- for field in comp.fields %}
+            {{ field.name }}: {{ field.default | rust_default(field.type) }},
+            {%- endfor %}
+        }
+    }
+}
+
+{% endfor %}
+
+// Component registry for runtime introspection
+pub struct ComponentRegistry;
+
+impl ComponentRegistry {
+    pub fn get_component_info(name: &str) -> Option<ComponentInfo> {
+        match name {
+            {%- for comp in component_types %}
+            "{{ comp.name }}" => Some(ComponentInfo {
+                name: "{{ comp.name }}",
+                version: {{ comp.version }},
+                mixins: vec![{% for mixin in comp.mixins %}"{{ mixin }}".to_string(){% if not loop.last %}, {% endif %}{% endfor %}],
+                laws: vec![{% for law in comp.laws %}"{{ law }}".to_string(){% if not loop.last %}, {% endif %}{% endfor %}],
+            }),
+            {%- endfor %}
+            _ => None,
+        }
+    }
+    
+    pub fn all_components() -> Vec<&'static str> {
+        vec![
+            {%- for comp in component_types %}
+            "{{ comp.name }}"{% if not loop.last %},{% endif %}
+            {%- endfor %}
+        ]
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ComponentInfo {
+    pub name: &'static str,
+    pub version: i32,
+    pub mixins: Vec<String>,
+    pub laws: Vec<String>,
+} 

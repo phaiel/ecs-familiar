@@ -1,0 +1,30 @@
+# cold/components.yaml
+ComponentType:
+  type: object
+  required:
+    - name
+    - fields
+  properties:
+    name:
+      type: string
+      description: Component type identifier
+    version:
+      type: integer
+      default: 1
+    mixins:
+      type: array
+      items: { type: string }
+    laws:
+      type: array
+      items: { type: string }
+    fields:
+      type: array
+      items:
+        type: object
+        required: [name, type]
+        properties:
+          name: { type: string }
+          type:
+            type: string
+            enum: [int, float, str, datetime, bool, vector, enum]
+          default: {} 

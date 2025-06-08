@@ -472,10 +472,23 @@ impl MemorySystem {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     
-    // Check for debug mode
-    if args.len() > 1 && args[1] == "--debug" {
-        debug_mode();
-        return;
+    // Check for different modes
+    if args.len() > 1 {
+        match args[1].as_str() {
+            "--debug" => {
+                debug_mode();
+                return;
+            }
+            "--schema-demo" => {
+                schema_demo_mode();
+                return;
+            }
+            "--help" => {
+                print_help();
+                return;
+            }
+            _ => {}
+        }
     }
     
     println!("{}", "🧵 Familiar Memory System Starting...".bright_green().bold());
@@ -575,4 +588,41 @@ fn debug_mode() {
     
     println!("\n{}", "🚀 Run with GraphQL interface: cargo run".bright_green());
     println!("{}", "📊 GraphiQL available at: http://127.0.0.1:8000".bright_blue());
+}
+
+/// 🧪 SCHEMA DEMO MODE: Demonstrate schema-first component system
+fn schema_demo_mode() {
+    println!("{}", "🧪 ECS Familiar - Schema-First Demo".bright_yellow().bold());
+    println!("{}", "This demonstrates the new YAML + Copier component generation system".bright_white());
+    
+    // Run the schema demos
+    if let Err(e) = std::panic::catch_unwind(|| {
+        familiar_hot_path::schema_demo::demo_schema_components();
+        familiar_hot_path::schema_demo::compare_component_systems();
+    }) {
+        println!("{}", format!("❌ Demo error: {:?}", e).bright_red());
+        println!("{}", "Make sure components_generated.rs exists by running: python3 generate_components.py".bright_yellow());
+    }
+}
+
+/// Print help information
+fn print_help() {
+    println!("{}", "🧵 ECS Familiar - Schema-Driven Memory Simulation".bright_green().bold());
+    println!();
+    println!("{}", "USAGE:".bright_white().bold());
+    println!("  cargo run                 # Start memory system with GraphQL interface");
+    println!("  cargo run -- --debug      # Debug mode - inspect world state");  
+    println!("  cargo run -- --schema-demo# Demo the new schema-first component system");
+    println!("  cargo run -- --help       # Show this help");
+    println!();
+    println!("{}", "FEATURES:".bright_white().bold());
+    println!("  🌐 GraphQL API at http://127.0.0.1:8000");
+    println!("  📊 Real-time world debugging");
+    println!("  ⚖️  Schema-driven physics laws");
+    println!("  🧬 Type-safe component generation");
+    println!("  🔄 Hot/cold path architecture");
+    println!();
+    println!("{}", "SCHEMA GENERATION:".bright_white().bold());
+    println!("  python3 generate_components.py  # Generate Rust components from YAML");
+    println!("  python3 cold_path/schema_integration.py  # Test Pydantic integration");
 } 

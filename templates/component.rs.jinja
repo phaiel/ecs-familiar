@@ -1,0 +1,82 @@
+// GENERATED CODE — DO NOT EDIT  
+// Generated from cold/instances/component_types.yml
+use chrono::prelude::*;
+use serde::{Deserialize, Serialize};
+
+{% for comp in component_types %}
+/// {{ comp.name }} component{% if comp.laws %} (affects: {{ comp.laws | join(', ') }}){% endif %}
+/// 
+/// This is a Hecs component - automatically implements Component trait
+/// for any type that is Send + Sync + 'static.
+#[derive(Debug, Clone)]
+pub struct Schema{{ comp.name }} {
+    {%- for field in comp.fields %}
+    {%- if field.default is defined %}
+    /// Default: {{ field.default }}
+    {%- endif %}
+    pub {{ field.name }}: {{ field.type | rust_typemap }},
+    {%- endfor %}
+}
+
+impl Schema{{ comp.name }} {
+    /// Component schema version
+    pub const VERSION: i32 = {{ comp.version }};
+    
+    {%- if comp.mixins %}
+    /// Mixins: {{ comp.mixins | join(', ') }}
+    pub const MIXINS: &'static [&'static str] = &[{% for mixin in comp.mixins %}"{{ mixin }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    {%- endif %}
+    
+    {%- if comp.laws %}
+    /// Physics laws that affect this component
+    pub const AFFECTED_BY_LAWS: &'static [&'static str] = &[{% for law in comp.laws %}"{{ law }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    {%- endif %}
+    
+    /// Create new Schema{{ comp.name }} with default values
+    pub fn new(
+        {%- for field in comp.fields %}
+        {%- if field.default is not defined %}
+        {{ field.name }}: {{ field.type | rust_typemap }},
+        {%- endif %}
+        {%- endfor %}
+    ) -> Self {
+        Self {
+            {%- for field in comp.fields %}
+            {%- if field.default is defined %}
+            {{ field.name }}: {{ field.default | rust_default(field.type) }},
+            {%- else %}
+            {{ field.name }},
+            {%- endif %}
+            {%- endfor %}
+        }
+    }
+}
+
+{% endfor %}
+
+/// Component registry for runtime introspection
+pub struct SchemaComponentRegistry;
+
+impl SchemaComponentRegistry {
+    /// Get all component names and versions
+    pub fn get_all_components() -> Vec<(&'static str, i32)> {
+        vec![
+            {%- for comp in component_types %}
+            ("Schema{{ comp.name }}", Schema{{ comp.name }}::VERSION),
+            {%- endfor %}
+        ]
+    }
+    
+    /// Get components affected by a specific law
+    pub fn get_components_for_law(law_name: &str) -> Vec<&'static str> {
+        let mut components = Vec::new();
+        {%- for comp in component_types %}
+        {%- if comp.laws %}
+        if Schema{{ comp.name }}::AFFECTED_BY_LAWS.contains(&law_name) {
+            components.push("Schema{{ comp.name }}");
+        }
+        {%- endif %}
+        {%- endfor %}
+        components
+    }
+} 
